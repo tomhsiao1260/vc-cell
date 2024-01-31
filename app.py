@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 def parse_obj(filename):
@@ -33,9 +34,30 @@ def parse_obj(filename):
 
 segmentID = '20230702185753'
 
+layer = 1050
+scrollX = 8096
+scrollY = 7888
+scrollZ = 14370
+
 obj_name   = f'../full-scrolls/Scroll1.volpkg/paths/{segmentID}/{segmentID}.obj'
 label_name = 'SPOILER_20230702185753.png'
 
-parse_obj(obj_name)
+data = parse_obj(obj_name)
+
+mask = np.abs(data['vertices'][:, 2] - layer) < 100
+p = data['vertices'][mask]
+uv = data['uvs'][mask]
+
+image = np.zeros((scrollY, scrollX, 3), dtype=np.uint8)
+
+for point in uv:
+    x = int(point[0] * scrollX)
+    y = int((1 - point[1]) * scrollY)
+    image[y, x] = (255, 255, 255)
+
+cv2.imshow('Image', image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
 
 
