@@ -4,25 +4,20 @@ import numpy as np
 from core.utils.loader import parse_obj
 from core.build.buildTree import buildPackedTree
 
-def drawBox(boundingData):
-    height, width = 500, 500
-    background = np.zeros((height, width, 3), dtype=np.uint8)
-
+def drawBox(boundingData, canvas, width, height, cx, cy, size):
     xmin, ymin, zmin, xmax, ymax, zmax = boundingData[:6]
 
     w = abs(xmax - xmin)
     h = abs(ymax - ymin)
 
-    box_width = int(0.75 * width)
-    box_height = int(h / w * box_width)
-    box_x = (width - box_width) // 2
-    box_y = (height - box_height) // 2
+    box_width = int(w / size * width)
+    box_height = int(h / size * height)
+    box_x = int((xmin - (cx - size / 2)) / size * width)
+    box_y = int((ymin - (cy - size / 2)) / size * height)
 
-    cv2.rectangle(background, (box_x, box_y), (box_x + box_width, box_y + box_height), (0, 255, 0), thickness=2)
+    print(box_x, box_y, box_width, box_height)
 
-    cv2.imshow('Box', background)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    cv2.rectangle(canvas, (box_x, box_y), (box_x + box_width, box_y + box_height), (0, 255, 0), thickness=2)
 
 
 if __name__ == "__main__":
@@ -32,5 +27,14 @@ if __name__ == "__main__":
 
     root = buildPackedTree(data)
 
-    # drawBox(root.boundingData)
+    height, width = 500, 500
+    canvas = np.zeros((height, width, 3), dtype=np.uint8)
+
+    drawBox(root.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+    # drawBox(root.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+    # drawBox(root.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+
+    cv2.imshow('Box', canvas)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
