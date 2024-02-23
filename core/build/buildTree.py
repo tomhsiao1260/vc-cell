@@ -34,3 +34,5 @@ def buildPackedTree(data):
     count = triangleBounds[0].shape[0]
 
     root = buildTree(triangleBounds, offset, count)
+
+    return root
