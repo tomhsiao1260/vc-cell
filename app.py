@@ -32,5 +32,5 @@ if __name__ == "__main__":
 
     root = buildPackedTree(data)
 
-    drawBox(root.boundingData)
+    # drawBox(root.boundingData)
 

@@ -2,7 +2,7 @@ import numpy as np
 from core.Constants import FLOAT32_EPSILON
 
 # computes the union of the bounds of all of the given triangles
-def getBounds(triangleBounds, offset, count, target, centroidTarget):
+def getBounds(data, triangleBounds, offset, count, target, centroidTarget):
     box_centers, box_half_sizes = triangleBounds[offset : offset + count]
 
     box_min = box_centers - box_half_sizes
