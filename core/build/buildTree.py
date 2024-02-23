@@ -23,14 +23,31 @@ def splitNode(data, triangleBounds, node, offset, count, centroidBoundingData, d
         setattr(node, "offset", offset)
         setattr(node, "count", count)
         return node
-    
+
     split = getOptimalSplit(centroidBoundingData)
+    axis, pos = split
 
     splitOffset = partition(data, triangleBounds, offset, count, split)
-    print(splitOffset)
 
-    axis, pos = split
     setattr(node, "splitAxis", axis)
+
+    # create the left child and compute its bounding box
+    left = MeshBVHNode()
+    lstart = offset
+    lcount = splitOffset - offset
+    setattr(node, "left", left)
+
+    getBounds(data, triangleBounds, lstart, lcount, left.boundingData, centroidBoundingData)
+    splitNode(data, triangleBounds, left, lstart, lcount, centroidBoundingData, depth + 1)
+
+    # repeat for right
+    right = MeshBVHNode()
+    rstart = splitOffset
+    rcount = count - lcount
+    setattr(node, "right", right)
+    
+    getBounds(data, triangleBounds, rstart, rcount, right.boundingData, centroidBoundingData)
+    splitNode(data, triangleBounds, right, rstart, rcount, centroidBoundingData, depth + 1)
 
 def buildPackedTree(data):
     triangleBounds = computeTriangleBounds(data)
