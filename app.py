@@ -1,12 +1,11 @@
+import os
 import numpy as np
-from utils.loader import parse_obj
-from utils.computeBoundsUtils import getBounds, computeTriangleBounds
+from core.utils.loader import parse_obj
+from core.build.buildTree import buildPackedTree
 
 if __name__ == "__main__":
-    # obj_name = 'traingle.obj'
-    # obj_name = 'quad.obj'
-    obj_name = 'plane.obj'
+    path = os.path.join('model', 'plane.obj')
 
-    data = parse_obj(obj_name)
-    box_centers, box_half_sizes = computeTriangleBounds(data)
-    getBounds(box_centers, box_half_sizes)
+    data = parse_obj(path)
+
+    buildPackedTree(data)
