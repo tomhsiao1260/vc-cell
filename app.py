@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from core.math.Triangle import Triangle
 from core.utils.loader import parse_obj
 from core.build.buildTree import buildPackedTree
 
@@ -25,16 +26,41 @@ if __name__ == "__main__":
 
     data = parse_obj(path)
 
-    root = buildPackedTree(data)
+    tri = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
+    T = Triangle(tri)
 
-    height, width = 500, 500
-    canvas = np.zeros((height, width, 3), dtype=np.uint8)
+    p1 = np.array([-1, -1, 3])
+    p2 = np.array([-1, 0.5, -3])
+    p3 = np.array([0, 2, 3])
+    p4 = np.array([1, 1, -3])
+    p5 = np.array([2, 0, 3])
+    p6 = np.array([0.5, -2, -3])
+    p7 = np.array([0.5, 0.5, 3])
 
-    drawBox(root.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+    print(T.closestPointToPoint(p1))
+    print(T.closestPointToPoint(p2))
+    print(T.closestPointToPoint(p3))
+    print(T.closestPointToPoint(p4))
+    print(T.closestPointToPoint(p5))
+    print(T.closestPointToPoint(p6))
+    print(T.closestPointToPoint(p7))
+
+    # root = buildPackedTree(data)
+
+    # height, width = 500, 500
+    # canvas = np.zeros((height, width, 3), dtype=np.uint8)
+
+    # drawBox(root.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+
     # drawBox(root.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
     # drawBox(root.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
 
-    cv2.imshow('Box', canvas)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # drawBox(root.right.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+    # drawBox(root.right.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+    # drawBox(root.left.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+    # drawBox(root.left.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+
+    # cv2.imshow('Box', canvas)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
