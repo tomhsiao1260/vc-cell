@@ -11,6 +11,14 @@ def closestPointToPoint(bvh, point, minThreshold, maxThreshold):
     closestDistanceSq = float('inf')
     closestDistanceTriIndex = None
 
+    def boundsTraverseOrder(boxMin, boxMax):
+        q = np.minimum(point, boxMax)
+        q = np.maximum(q, boxMin)
+        return np.sum((point - q)**2)
+
+    def intersectsBounds(box, isLeaf, score):
+        return score < closestDistanceSq and score < maxThresholdSq
+
     def intersectsTriangle(tri, triIndex):
         nonlocal minThresholdSq, maxThresholdSq
         nonlocal closestPoint, closestDistanceSq, closestDistanceTriIndex
@@ -21,14 +29,17 @@ def closestPointToPoint(bvh, point, minThreshold, maxThreshold):
             closestPoint = q
             closestDistanceSq = distSq
             closestDistanceTriIndex = triIndex
-            
+
             if (distSq < minThresholdSq): return True
             else: return False
 
     bvh.shapecast({
+        'boundsTraverseOrder': boundsTraverseOrder,
+        'intersectsBounds': intersectsBounds,
         'intersectsTriangle': intersectsTriangle
     })
 
+    if (closestDistanceSq == float('inf')): return None
     point = closestPoint
     distance = np.sqrt(closestDistanceSq)
     faceIndex = closestDistanceTriIndex
