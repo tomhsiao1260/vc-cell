@@ -15,8 +15,8 @@ def closestPointToPoint(bvh, point, minThreshold, maxThreshold):
         nonlocal minThresholdSq, maxThresholdSq
         nonlocal closestPoint, closestDistanceSq, closestDistanceTriIndex
 
-        q = tri.closestPointToPoint(point)
-        distSq = np.sum(point**2) + np.sum(q**2)
+        q = tri.closestPointToPoint(point, triIndex)
+        distSq = np.sum((point - q)**2)
         if (distSq < closestDistanceSq):
             closestPoint = q
             closestDistanceSq = distSq

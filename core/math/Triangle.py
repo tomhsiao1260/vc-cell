@@ -2,14 +2,12 @@ import numpy as np
 
 class Triangle:
     def __init__(self, tri):
-        self.a = tri[0]
-        self.b = tri[1]
-        self.c = tri[2]
+        self.tri = tri
 
-    def closestPointToPoint(self, p):
-        a = self.a
-        b = self.b
-        c = self.c
+    def closestPointToPoint(self, p, i):
+        a = self.tri[i][0]
+        b = self.tri[i][1]
+        c = self.tri[i][2]
 
         # algorithm thanks to Real-Time Collision Detection by Christer Ericson,
 		# published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc.,
