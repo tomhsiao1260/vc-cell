@@ -8,12 +8,12 @@ class MeshBVHHelper:
         self.canvas = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
     def draw(self):
-        height, width, canvas, bvh = self.height, self.width, self.canvas, self.bvh
+        height, width, canvas, root = self.height, self.width, self.canvas, self.bvh._roots[0]
 
-        # self.drawBox(bvh.root.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+        # self.drawBox(root.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
         
-        self.drawBox(bvh.root.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        self.drawBox(bvh.root.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+        self.drawBox(root.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+        self.drawBox(root.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
         
         # self.drawBox(root.right.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
         # self.drawBox(root.right.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)

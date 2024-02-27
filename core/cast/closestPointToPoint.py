@@ -16,7 +16,7 @@ def closestPointToPoint(bvh, point, minThreshold, maxThreshold):
         q = np.maximum(q, boxMin)
         return np.sum((point - q)**2)
 
-    def intersectsBounds(box, isLeaf, score):
+    def intersectsBounds(boxMin, boxMax, isLeaf, score):
         return score < closestDistanceSq and score < maxThresholdSq
 
     def intersectsTriangle(tri, triIndex):

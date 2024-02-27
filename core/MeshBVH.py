@@ -7,8 +7,9 @@ from core.cast.shapecast import shapecast
 
 class MeshBVH:
     def __init__(self, data):
-        self._root = buildPackedTree(data)
+        root = buildPackedTree(data)
         self.data = data
+        self._roots = [root]
 
     def closestPointToPoint(self, point, minThreshold = 0, maxThreshold = float('inf')):
         return closestPointToPoint(self, point, minThreshold, maxThreshold)

@@ -16,7 +16,7 @@ def buildTree(data, triangleBounds, offset, count):
 # either recursively splits the given node, creating left and right subtrees for it, or makes it a leaf node,
 # recording the offset and count of its triangles and writing them into the reordered geometry index.
 def splitNode(data, triangleBounds, node, offset, count, centroidBoundingData, depth = 0):
-    maxLeafTris = 5
+    maxLeafTris = 3
 
     # early out if we've met our capacity
     if (count <= maxLeafTris):
