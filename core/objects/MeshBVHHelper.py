@@ -7,23 +7,23 @@ class MeshBVHHelper:
         self.height, self.width = 500, 500
         self.canvas = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
-    def draw(self):
-        height, width, canvas, root = self.height, self.width, self.canvas, self.bvh._roots[0]
+    def draw(self, depth = 0):
+        root, canvas = self.bvh._roots[0], self.canvas
+        self.drawTraverse(root, depth)
 
-        # self.drawBox(root.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        
-        self.drawBox(root.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        self.drawBox(root.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        
-        # self.drawBox(root.right.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        # self.drawBox(root.right.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        # self.drawBox(root.left.right.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-        # self.drawBox(root.left.left.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
-    
         cv2.imshow('Box', canvas)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        
+
+    def drawTraverse(self, node, depth):
+        height, width, canvas = self.height, self.width, self.canvas
+
+        if (depth == 0):
+            self.drawBox(node.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+
+        if (hasattr(node, 'left')): self.drawTraverse(node.left, depth - 1)
+        if (hasattr(node, 'right')): self.drawTraverse(node.right, depth - 1)
+
     def drawBox(self, boundingData, canvas, width, height, cx, cy, size):
         xmin, ymin, zmin, xmax, ymax, zmax = boundingData[:6]
 

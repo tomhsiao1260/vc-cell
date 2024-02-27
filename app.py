@@ -24,5 +24,7 @@ if __name__ == "__main__":
     print('point: ', point)
     print('distance: ', distance)
 
-    # helper = MeshBVHHelper(bvh)
-    # helper.draw()
+    helper = MeshBVHHelper(bvh)
+    helper.draw(depth = 0)
+    helper.draw(depth = 1)
+    helper.draw(depth = 2)
