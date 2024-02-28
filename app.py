@@ -40,6 +40,8 @@ if __name__ == "__main__":
     windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
     windowSize = int(1.5 * windowSize)
 
+    print(center)
+
     drawDistaneField(bvh, center, windowSize)
 
     # depth = 0

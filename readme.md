@@ -1,6 +1,6 @@
 ## Introduction
 
-A tool for Vesuvius Challenge that can transform flatten labels into slice labels.
+A tool for Vesuvius Challenge that can build the distance field and BVH tree for a given segment.
 
 ## Setup
 
