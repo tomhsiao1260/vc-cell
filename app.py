@@ -40,11 +40,11 @@ if __name__ == "__main__":
     windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
     windowSize = int(1.5 * windowSize)
 
-    drawDistaneField(bvh, center, windowSize)
+    # drawDistaneField(bvh, center, windowSize)
 
-    # depth = 0
-    # helper = MeshBVHHelper(bvh)
+    depth = 0
+    helper = MeshBVHHelper(bvh)
 
-    # while (True):
-    #     if (helper.draw(depth)): depth += 1
-    #     else: break
+    while (True):
+        if (helper.draw(center, windowSize, depth)): depth += 1
+        else: break

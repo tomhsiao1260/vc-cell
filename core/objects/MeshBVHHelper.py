@@ -7,16 +7,17 @@ class MeshBVHHelper:
         self.height, self.width = 500, 500
         self.canvas = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
-    def draw(self, depth = 0):
+    def draw(self, center, windowSize, depth = 0):
+        self.clear()
         root, canvas = self.bvh._roots[0], self.canvas
-
         needToDraw = False
+
         def drawTraverse(node, depth):
             nonlocal needToDraw
             height, width, canvas = self.height, self.width, self.canvas
 
             if (depth == 0):
-                self.drawBox(node.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+                self.drawBox(node.boundingData, canvas, width, height, cx = center[0], cy = center[1], size = windowSize)
                 needToDraw = True
 
             if (hasattr(node, 'left')): drawTraverse(node.left, depth - 1)
@@ -43,4 +44,7 @@ class MeshBVHHelper:
         box_x = int((xmin - (cx - size / 2)) / size * width)
         box_y = int((ymin - (cy - size / 2)) / size * height)
 
-        cv2.rectangle(canvas, (box_x, box_y), (box_x + box_width, box_y + box_height), (0, 255, 0), thickness=2)
+        cv2.rectangle(canvas, (box_x, box_y), (box_x + box_width, box_y + box_height), (0, 255, 0), thickness=1)
+
+    def clear(self):
+        self.canvas[:] = np.zeros_like(self.canvas)
