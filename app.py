@@ -26,26 +26,23 @@ def drawDistaneField(bvh):
 
 if __name__ == "__main__":
     path = os.path.join('model', 'plane.obj')
+    # path = os.path.join('model', '20230702185753.obj')
 
     data = parse_obj(path)
     bvh = MeshBVH(data)
 
-    p = np.array([-1, -1, 3])
-    # p = np.array([-1, 0.5, -3])
-    # p = np.array([0, 2, 3])
-    # p = np.array([1, 1, -3])
-    # p = np.array([2, 0, 3])
-    # p = np.array([0.5, -2, -3])
-    # p = np.array([0.5, 0.5, 3])
+    # p = np.array([-1, -1, 3])
 
     # point, distance, faceIndex = bvh.closestPointToPoint(p)
     # print('faceIndex: ', faceIndex)
     # print('point: ', point)
     # print('distance: ', distance)
 
-    drawDistaneField(bvh)
+    # drawDistaneField(bvh)
 
-    # helper = MeshBVHHelper(bvh)
-    # helper.draw(depth = 0)
-    # helper.draw(depth = 1)
-    # helper.draw(depth = 2)
+    helper = MeshBVHHelper(bvh)
+    depth = 0
+    while (True):
+        needToDraw = helper.draw(depth)
+        depth += 1
+        if (needToDraw is False): break

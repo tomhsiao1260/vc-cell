@@ -9,20 +9,28 @@ class MeshBVHHelper:
 
     def draw(self, depth = 0):
         root, canvas = self.bvh._roots[0], self.canvas
-        self.drawTraverse(root, depth)
 
-        cv2.imshow('Box', canvas)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        needToDraw = False
+        def drawTraverse(node, depth):
+            nonlocal needToDraw
+            height, width, canvas = self.height, self.width, self.canvas
 
-    def drawTraverse(self, node, depth):
-        height, width, canvas = self.height, self.width, self.canvas
+            if (depth == 0):
+                self.drawBox(node.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+                needToDraw = True
 
-        if (depth == 0):
-            self.drawBox(node.boundingData, canvas, width, height, cx = 0, cy = 0, size = 2.67)
+            if (hasattr(node, 'left')): drawTraverse(node.left, depth - 1)
+            if (hasattr(node, 'right')): drawTraverse(node.right, depth - 1)
 
-        if (hasattr(node, 'left')): self.drawTraverse(node.left, depth - 1)
-        if (hasattr(node, 'right')): self.drawTraverse(node.right, depth - 1)
+        drawTraverse(root, depth)
+
+        if (needToDraw):
+            cv2.imshow('Box', canvas)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            return True
+
+        return False
 
     def drawBox(self, boundingData, canvas, width, height, cx, cy, size):
         xmin, ymin, zmin, xmax, ymax, zmax = boundingData[:6]
