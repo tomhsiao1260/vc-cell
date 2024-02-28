@@ -6,43 +6,45 @@ from core.math.Triangle import Triangle
 from core.objects.MeshBVHHelper import MeshBVHHelper
 from core.utils.loader import parse_obj
 
-def drawDistaneField(bvh):
-    g = 10
-    w, h, d = 7, 7, 0.1
-    hSampling, wSampling = 50, 50
-    canvas = np.zeros((hSampling * g, wSampling * g, 3), dtype=np.uint8)
-    maxDistance = np.sqrt(100)
+def drawDistaneField(bvh, center, windowSize):
+    canvas = np.zeros((windowSize, windowSize, 3), dtype=np.uint8)
 
-    for i in range(hSampling + 1):
-        for j in range(wSampling + 1):
-            p = np.array([w * (j/wSampling - 0.5), h * (i/hSampling - 0.5), d])
+    sampling = 50
+    layer = center[2]
+    gap = windowSize / sampling
+    maxDistance = windowSize / 2
+
+    for i in range(sampling):
+        for j in range(sampling):
+            x = center[0] - windowSize / 2 + (i + 0.5) * gap
+            y = center[1] - windowSize / 2 + (j + 0.5) * gap
+            p = np.array([x, y, layer])
             point, distance, faceIndex = bvh.closestPointToPoint(p)
 
-            canvas[i*g:(i+1)*g, j*g:(j+1)*g, :] = 255 * distance / maxDistance
-            
+            canvas[i*int(gap):(i+1)*int(gap), j*int(gap):(j+1)*int(gap), :] = 255 * distance / maxDistance
+
     cv2.imshow('Box', canvas)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    path = os.path.join('model', 'plane.obj')
-    # path = os.path.join('model', '20230702185753.obj')
+    # path = os.path.join('model', 'plane.obj')
+    path = os.path.join('model', '20230702185753.obj')
 
     data = parse_obj(path)
     bvh = MeshBVH(data)
 
-    # p = np.array([-1, -1, 3])
+    center = np.mean(data['vertices'], axis=0)
+    boxMin = np.min(data['vertices'], axis=0)
+    boxMax = np.max(data['vertices'], axis=0)
+    windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
+    windowSize = int(1.5 * windowSize)
 
-    # point, distance, faceIndex = bvh.closestPointToPoint(p)
-    # print('faceIndex: ', faceIndex)
-    # print('point: ', point)
-    # print('distance: ', distance)
+    drawDistaneField(bvh, center, windowSize)
 
-    # drawDistaneField(bvh)
+    # depth = 0
+    # helper = MeshBVHHelper(bvh)
 
-    helper = MeshBVHHelper(bvh)
-    depth = 0
-    while (True):
-        needToDraw = helper.draw(depth)
-        depth += 1
-        if (needToDraw is False): break
+    # while (True):
+    #     if (helper.draw(depth)): depth += 1
+    #     else: break
