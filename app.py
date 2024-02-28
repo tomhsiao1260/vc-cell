@@ -21,7 +21,7 @@ def drawDistaneField(bvh, center, windowSize):
             p = np.array([x, y, layer])
             point, distance, faceIndex = bvh.closestPointToPoint(p)
 
-            canvas[i*int(gap):(i+1)*int(gap), j*int(gap):(j+1)*int(gap), :] = 255 * distance / maxDistance
+            canvas[j*int(gap):(j+1)*int(gap), i*int(gap):(i+1)*int(gap), :] = 255 * distance / maxDistance
 
     cv2.imshow('Box', canvas)
     cv2.waitKey(0)
@@ -40,11 +40,11 @@ if __name__ == "__main__":
     windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
     windowSize = int(1.5 * windowSize)
 
-    # drawDistaneField(bvh, center, windowSize)
+    drawDistaneField(bvh, center, windowSize)
 
-    depth = 0
-    helper = MeshBVHHelper(bvh)
+    # depth = 0
+    # helper = MeshBVHHelper(bvh)
 
-    while (True):
-        if (helper.draw(center, windowSize, depth)): depth += 1
-        else: break
+    # while (True):
+    #     if (helper.draw(center, windowSize, depth)): depth += 1
+    #     else: break
