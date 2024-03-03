@@ -8,22 +8,25 @@ from core.utils.loader import parse_obj
 
 def drawDistaneField(bvh, center, windowSize):
     imgSize = 500
-    canvas = np.zeros((imgSize, imgSize, 3), dtype=np.uint8)
-
     sampling = 50
     layer = center[2]
     gap = windowSize / sampling
     igap = imgSize / sampling
     maxDistance = windowSize / 2
 
-    for i in range(sampling):
-        for j in range(sampling):
-            x = center[0] - windowSize / 2 + (i + 0.5) * gap
-            y = center[1] - windowSize / 2 + (j + 0.5) * gap
-            p = np.array([x, y, layer])
-            point, distance, faceIndex = bvh.closestPointToPoint(p)
+    i, j = np.meshgrid(np.arange(sampling), np.arange(sampling), indexing='ij')
+    x = center[0] - windowSize / 2 + (i + 0.5) * gap
+    y = center[1] - windowSize / 2 + (j + 0.5) * gap
+    z = layer * np.full_like(x, 1)
+    p = np.stack((x, y, z), axis=-1)
 
-            canvas[int(j*igap):int((j+1)*igap), int(i*igap):int((i+1)*igap), :] = 255 * distance / maxDistance
+    distance = bvh.closestPointToPointGPU(p, center)
+    d = 255 * distance / maxDistance
+
+    canvas = d.transpose(1, 0).astype(np.uint8)
+    # canvas = p.transpose(1, 0, 2).astype(np.uint8)
+    canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
+    canvas = cv2.resize(canvas, (imgSize, imgSize))
 
     cv2.imshow('Box', canvas)
     cv2.waitKey(0)

@@ -45,3 +45,7 @@ def closestPointToPoint(bvh, point, minThreshold, maxThreshold):
     faceIndex = closestDistanceTriIndex
 
     return point, distance, faceIndex
+
+def closestPointToPointGPU(bvh, point, center, minThreshold, maxThreshold):
+    distance = np.linalg.norm(point - center, axis=2)
+    return distance

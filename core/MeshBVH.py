@@ -2,6 +2,7 @@ import numpy as np
 from core.math.Triangle import Triangle
 from core.build.buildTree import buildPackedTree
 from core.cast.closestPointToPoint import closestPointToPoint
+from core.cast.closestPointToPoint import closestPointToPointGPU
 from core.utils.iterationUtils import iterateOverTriangles
 from core.cast.shapecast import shapecast
 
@@ -13,6 +14,10 @@ class MeshBVH:
 
     def closestPointToPoint(self, point, minThreshold = 0, maxThreshold = float('inf')):
         return closestPointToPoint(self, point, minThreshold, maxThreshold)
+    
+
+    def closestPointToPointGPU(self, point, center, minThreshold = 0, maxThreshold = float('inf')):
+        return closestPointToPointGPU(self, point, center, minThreshold, maxThreshold)
 
     def shapecast(self, callbacks):
         boundsTraverseOrder = callbacks['boundsTraverseOrder']
