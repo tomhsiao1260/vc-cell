@@ -20,7 +20,7 @@ def drawDistaneField(bvh, center, windowSize):
     z = layer * np.full_like(x, 1)
     p = np.stack((x, y, z), axis=-1)
 
-    distance = bvh.closestPointToPointGPU(p, center)
+    distance = bvh.closestPointToPointGPU(p)
     d = 255 * distance / maxDistance
 
     canvas = d.transpose(1, 0).astype(np.uint8)

@@ -7,3 +7,4 @@ def iterateOverTriangles(
 	for i in range(offset, offset + count):
 		if (intersectsTriangleFunc(tri, i)): return True
 	return False
+

@@ -14,10 +14,9 @@ class MeshBVH:
 
     def closestPointToPoint(self, point, minThreshold = 0, maxThreshold = float('inf')):
         return closestPointToPoint(self, point, minThreshold, maxThreshold)
-    
 
-    def closestPointToPointGPU(self, point, center, minThreshold = 0, maxThreshold = float('inf')):
-        return closestPointToPointGPU(self, point, center, minThreshold, maxThreshold)
+    def closestPointToPointGPU(self, point, minThreshold = 0, maxThreshold = float('inf')):
+        return closestPointToPointGPU(self, point, minThreshold, maxThreshold)
 
     def shapecast(self, callbacks):
         boundsTraverseOrder = callbacks['boundsTraverseOrder']
