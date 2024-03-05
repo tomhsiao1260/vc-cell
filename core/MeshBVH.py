@@ -14,15 +14,17 @@ class MeshBVH:
     def closestPointToPoint(self, point, minThreshold = 0, maxThreshold = float('inf')):
         return closestPointToPoint(self, point, minThreshold, maxThreshold)
 
-    def closestPointToPointGPU(self, point):
-        w, h, _ = point.shape
-        vertices = self.data['vertices']
-
+    def closestPointToPointGPU(self, point, offset, count):
+        w, h, _ = point.shape    
         closestPoint = np.full((w, h, 3), 0)
         closestPointIndex = np.full((w, h), 0)
         closestDistance = np.full((w, h), float('inf'))
 
-        for i, target in enumerate(vertices):
+        faces = self.data['faces'][offset: offset + count]
+        selected_indices = np.unique((faces - 1)[:,:,0])
+
+        for i in selected_indices:
+            target = self.data['vertices'][i]
             d = np.linalg.norm(point - target, axis=2)
             closestDistance = np.minimum(closestDistance, d)
             closestPoint[(closestDistance == d)] = target

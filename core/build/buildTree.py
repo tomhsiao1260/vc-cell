@@ -8,6 +8,9 @@ def buildTree(data, triangleBounds, offset, count):
     centroidTarget = np.zeros(6, dtype=np.float32)
 
     root = MeshBVHNode()
+    setattr(root, "_offset", offset)
+    setattr(root, "_count", count)
+
     getBounds(data, triangleBounds, offset, count, root.boundingData, centroidTarget)
     splitNode(data, triangleBounds, root, offset, count, centroidTarget)
 
@@ -36,6 +39,8 @@ def splitNode(data, triangleBounds, node, offset, count, centroidBoundingData, d
     lstart = offset
     lcount = splitOffset - offset
     setattr(node, "left", left)
+    setattr(node.left, "_offset", lstart)
+    setattr(node.left, "_count", lcount)
 
     getBounds(data, triangleBounds, lstart, lcount, left.boundingData, centroidBoundingData)
     splitNode(data, triangleBounds, left, lstart, lcount, centroidBoundingData, depth + 1)
@@ -45,7 +50,9 @@ def splitNode(data, triangleBounds, node, offset, count, centroidBoundingData, d
     rstart = splitOffset
     rcount = count - lcount
     setattr(node, "right", right)
-    
+    setattr(node.right, "_offset", rstart)
+    setattr(node.right, "_count", rcount)
+
     getBounds(data, triangleBounds, rstart, rcount, right.boundingData, centroidBoundingData)
     splitNode(data, triangleBounds, right, rstart, rcount, centroidBoundingData, depth + 1)
 

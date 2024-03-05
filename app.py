@@ -15,33 +15,30 @@ def cut(segmentID, layer, gap):
     re_index(data)
     save_obj(os.path.join('model', f'{segmentID}.obj'), data, materialName = segmentID)
 
-def drawDistaneField(bvh):
-    data = bvh.data
-    center = np.mean(data['vertices'], axis=0)
-    boxMin = np.min(data['vertices'], axis=0)
-    boxMax = np.max(data['vertices'], axis=0)
-    windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
-    windowSize = int(1.5 * windowSize)
+def drawDistaneField(bvh, node = None):
+    if (node is None): node = bvh._roots[0]
+    boxMin = node.boundingData[:3]
+    boxMax = node.boundingData[3:]
+    center = (boxMin + boxMax) / 2
 
-    imgSize = 500
-    sampling = 50
-    layer = center[2]
-    gap = windowSize / sampling
-    maxDistance = windowSize / 2
+    sampling = 500
+    windowSize = 1.0 * (boxMax - boxMin)
+    maxDistance = np.max(windowSize) / 2
+    imgSize = (500, int(500 * windowSize[1] / windowSize[0]))
 
     i, j = np.meshgrid(np.arange(sampling), np.arange(sampling), indexing='ij')
-    x = center[0] - windowSize / 2 + (i + 0.5) * gap
-    y = center[1] - windowSize / 2 + (j + 0.5) * gap
-    z = layer * np.full_like(x, 1)
+    x = center[0] - windowSize[0] / 2 + (i + 0.5) * windowSize[0] / sampling
+    y = center[1] - windowSize[1] / 2 + (j + 0.5) * windowSize[1] / sampling
+    z = center[2] * np.full_like(x, 1)
     p = np.stack((x, y, z), axis=-1)
 
-    closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p)
+    closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count)
     d = 255 * closestDistance / maxDistance
 
     canvas = d.transpose(1, 0).astype(np.uint8)
     # canvas = p.transpose(1, 0, 2).astype(np.uint8)
     canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
-    canvas = cv2.resize(canvas, (imgSize, imgSize))
+    canvas = cv2.resize(canvas, imgSize)
 
     cv2.imshow('Distance', canvas)
     cv2.waitKey(0)
@@ -49,8 +46,13 @@ def drawDistaneField(bvh):
 
     return closestPoint, closestPointIndex, closestDistance
 
-def drawLabels(closestPointIndex):
-    imgSize = 500
+def drawLabels(bvh, closestPointIndex, node = None):
+    if (node is None): node = bvh._roots[0]
+    boxMin = node.boundingData[:3]
+    boxMax = node.boundingData[3:]
+    windowSize = 1.0 * (boxMax - boxMin)
+    imgSize = (500, int(500 * windowSize[1] / windowSize[0]))
+
     labels = cv2.imread(os.path.join('model', '20230702185753_inklabels.png'), cv2.IMREAD_UNCHANGED)
 
     h_label, w_label = labels.shape
@@ -60,7 +62,7 @@ def drawLabels(closestPointIndex):
 
     canvas = labels[y, x].transpose(1, 0).astype(np.uint8)
     canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
-    canvas = cv2.resize(canvas, (imgSize, imgSize))
+    canvas = cv2.resize(canvas, imgSize)
 
     cv2.imshow('Label', canvas)
     cv2.waitKey(0)
@@ -90,6 +92,7 @@ if __name__ == "__main__":
     data = parse_obj(path)
     bvh = MeshBVH(data)
 
-    _, closestPointIndex, _ = drawDistaneField(bvh)
-    drawLabels(closestPointIndex)
+    node = bvh._roots[0].left.left.left.left
+    points, indices, distances = drawDistaneField(bvh, node)
+    drawLabels(bvh, indices, node)
     # drawBoxes(bvh)
