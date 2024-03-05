@@ -16,10 +16,10 @@ def cut(segmentID, layer, gap):
     save_obj(os.path.join('model', f'{segmentID}.obj'), data, materialName = segmentID)
 
 def drawDistaneField(bvh):
-    vertices = bvh.data['vertices']
-    center = np.mean(vertices, axis=0)
-    boxMin = np.min(vertices, axis=0)
-    boxMax = np.max(vertices, axis=0)
+    data = bvh.data
+    center = np.mean(data['vertices'], axis=0)
+    boxMin = np.min(data['vertices'], axis=0)
+    boxMax = np.max(data['vertices'], axis=0)
     windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
     windowSize = int(1.5 * windowSize)
 
@@ -35,15 +35,34 @@ def drawDistaneField(bvh):
     z = layer * np.full_like(x, 1)
     p = np.stack((x, y, z), axis=-1)
 
-    distance = bvh.closestPointToPointGPU(p)
-    d = 255 * distance / maxDistance
+    closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p)
+    d = 255 * closestDistance / maxDistance
 
     canvas = d.transpose(1, 0).astype(np.uint8)
     # canvas = p.transpose(1, 0, 2).astype(np.uint8)
     canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
     canvas = cv2.resize(canvas, (imgSize, imgSize))
 
-    cv2.imshow('Box', canvas)
+    cv2.imshow('Distance', canvas)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    return closestPoint, closestPointIndex, closestDistance
+
+def drawLabels(closestPointIndex):
+    imgSize = 500
+    labels = cv2.imread(os.path.join('model', '20230702185753_inklabels.png'), cv2.IMREAD_UNCHANGED)
+
+    h_label, w_label = labels.shape
+    uv = data['uvs'][closestPointIndex]
+    x = (uv[:, :, 0] * (w_label - 1)).astype(int)
+    y = ((1 - uv[:, :, 1]) * (h_label - 1)).astype(int)
+
+    canvas = labels[y, x].transpose(1, 0).astype(np.uint8)
+    canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
+    canvas = cv2.resize(canvas, (imgSize, imgSize))
+
+    cv2.imshow('Label', canvas)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -71,5 +90,6 @@ if __name__ == "__main__":
     data = parse_obj(path)
     bvh = MeshBVH(data)
 
-    drawDistaneField(bvh)
+    _, closestPointIndex, _ = drawDistaneField(bvh)
+    drawLabels(closestPointIndex)
     # drawBoxes(bvh)

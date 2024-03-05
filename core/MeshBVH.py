@@ -16,13 +16,19 @@ class MeshBVH:
 
     def closestPointToPointGPU(self, point):
         w, h, _ = point.shape
-        distance = np.full((w, h), float('inf'))
         vertices = self.data['vertices']
 
-        for i, target in enumerate(vertices):
-            distance = np.minimum(distance, np.linalg.norm(point - target, axis=2))
+        closestPoint = np.full((w, h, 3), 0)
+        closestPointIndex = np.full((w, h), 0)
+        closestDistance = np.full((w, h), float('inf'))
 
-        return distance
+        for i, target in enumerate(vertices):
+            d = np.linalg.norm(point - target, axis=2)
+            closestDistance = np.minimum(closestDistance, d)
+            closestPoint[(closestDistance == d)] = target
+            closestPointIndex[(closestDistance == d)] = i
+
+        return closestPoint, closestPointIndex, closestDistance
 
     def shapecast(self, callbacks):
         boundsTraverseOrder = callbacks['boundsTraverseOrder']
