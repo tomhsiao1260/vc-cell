@@ -11,7 +11,6 @@ def drawDistaneField(bvh, center, windowSize):
     sampling = 50
     layer = center[2]
     gap = windowSize / sampling
-    igap = imgSize / sampling
     maxDistance = windowSize / 2
 
     i, j = np.meshgrid(np.arange(sampling), np.arange(sampling), indexing='ij')
