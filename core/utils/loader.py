@@ -31,7 +31,7 @@ def parse_obj(filename):
 
     return data
 
-def save_obj(filename, data, segmentID):
+def save_obj(filename, data, materialName = None):
     vertices = data.get('vertices', np.array([]))
     normals  = data.get('normals' , np.array([]))
     uvs      = data.get('uvs'     , np.array([]))
@@ -39,9 +39,10 @@ def save_obj(filename, data, segmentID):
     colors   = data.get('colors'  , np.array([]))
 
     with open(filename, 'w') as f:
-        f.write(f"# Texture information\n")
-        f.write(f"mtllib {segmentID}.mtl\n")
-        f.write(f"usemtl default\n")
+        if (materialName is not None):
+            f.write(f"# Texture information\n")
+            f.write(f"mtllib {materialName}.mtl\n")
+            f.write(f"usemtl default\n")
 
         f.write(f"# Vertices: {len(vertices)}\n")
         f.write(f"# Faces: {len(faces)}\n")

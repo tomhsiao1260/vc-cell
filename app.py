@@ -4,9 +4,25 @@ import numpy as np
 from core.MeshBVH import MeshBVH
 from core.math.Triangle import Triangle
 from core.objects.MeshBVHHelper import MeshBVHHelper
-from core.utils.loader import parse_obj
+from core.utils.cut import cut_obj, re_index
+from core.utils.loader import parse_obj, save_obj
 
-def drawDistaneField(bvh, center, windowSize):
+def cut(segmentID, layer, gap):
+    path = f'../full-scrolls/Scroll1.volpkg/paths/{segmentID}/{segmentID}.obj'
+    data = parse_obj(path)
+
+    data = cut_obj(data, layer, gap)
+    re_index(data)
+    save_obj(os.path.join('model', f'{segmentID}.obj'), data, materialName = segmentID)
+
+def drawDistaneField(bvh):
+    vertices = bvh.data['vertices']
+    center = np.mean(vertices, axis=0)
+    boxMin = np.min(vertices, axis=0)
+    boxMax = np.max(vertices, axis=0)
+    windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
+    windowSize = int(1.5 * windowSize)
+
     imgSize = 500
     sampling = 50
     layer = center[2]
@@ -31,24 +47,29 @@ def drawDistaneField(bvh, center, windowSize):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def drawBoxes(bvh):
+    vertices = bvh.data['vertices']
+    center = np.mean(vertices, axis=0)
+    boxMin = np.min(vertices, axis=0)
+    boxMax = np.max(vertices, axis=0)
+    windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
+    windowSize = int(1.5 * windowSize)
+
+    depth = 0
+    helper = MeshBVHHelper(bvh)
+
+    while (True):
+        if (helper.draw(center, windowSize, depth)): depth += 1
+        else: break
+
 if __name__ == "__main__":
+    # cut(segmentID = '20230702185753', layer = 1000, gap = 10)
+
     # path = os.path.join('model', 'plane.obj')
     path = os.path.join('model', '20230702185753.obj')
 
     data = parse_obj(path)
     bvh = MeshBVH(data)
 
-    center = np.mean(data['vertices'], axis=0)
-    boxMin = np.min(data['vertices'], axis=0)
-    boxMax = np.max(data['vertices'], axis=0)
-    windowSize = 2 * np.max(np.maximum(boxMin - center, boxMax - center))
-    windowSize = int(1.5 * windowSize)
-
-    drawDistaneField(bvh, center, windowSize)
-
-    # depth = 0
-    # helper = MeshBVHHelper(bvh)
-
-    # while (True):
-    #     if (helper.draw(center, windowSize, depth)): depth += 1
-    #     else: break
+    drawDistaneField(bvh)
+    # drawBoxes(bvh)
