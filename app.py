@@ -16,33 +16,40 @@ def cut(segmentID, layer, gap):
     save_obj(os.path.join('model', f'{segmentID}.obj'), data, materialName = segmentID)
 
 def drawDistaneField(bvh, node = None):
+    path = os.path.join('model', '20230702185753')
+    if not os.path.exists(path): os.makedirs(path)
+
     if (node is None): node = bvh._roots[0]
     boxMin = node.boundingData[:3]
     boxMax = node.boundingData[3:]
+    layerMin = int(boxMin[2])
+    layerMax = int(boxMax[2])
     center = (boxMin + boxMax) / 2
 
-    sampling = 500
+    sampling = (1.0 * (boxMax - boxMin)).astype('int')
     windowSize = 1.0 * (boxMax - boxMin)
-    maxDistance = np.max(windowSize) / 2
-    imgSize = (500, int(500 * windowSize[1] / windowSize[0]))
+    maxDistance = np.max(windowSize[:2])
+    # imgSize = (sampling[0], sampling[1])
 
-    i, j = np.meshgrid(np.arange(sampling), np.arange(sampling), indexing='ij')
-    x = center[0] - windowSize[0] / 2 + (i + 0.5) * windowSize[0] / sampling
-    y = center[1] - windowSize[1] / 2 + (j + 0.5) * windowSize[1] / sampling
-    z = center[2] * np.full_like(x, 1)
-    p = np.stack((x, y, z), axis=-1)
+    i, j = np.meshgrid(np.arange(sampling[0]), np.arange(sampling[1]), indexing='ij')
 
-    closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count)
-    d = 255 * closestDistance / maxDistance
+    for layer in range(layerMin, layerMax, 1):
+        x = center[0] - windowSize[0] / 2 + (i + 0.5) * windowSize[0] / sampling[0]
+        y = center[1] - windowSize[1] / 2 + (j + 0.5) * windowSize[1] / sampling[1]
+        z = layer * np.full_like(x, 1)
+        p = np.stack((x, y, z), axis=-1)
 
-    canvas = d.transpose(1, 0).astype(np.uint8)
-    # canvas = p.transpose(1, 0, 2).astype(np.uint8)
-    canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
-    canvas = cv2.resize(canvas, imgSize)
+        closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count, layer)
+        d = 255 * closestDistance / maxDistance
 
-    cv2.imshow('Distance', canvas)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        canvas = d.transpose(1, 0).astype(np.uint8)
+        # canvas = cv2.resize(canvas, imgSize)
+
+        # cv2.imshow('Distance', canvas)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+        cv2.imwrite(os.path.join(path, f'{layer}.png'), canvas)
 
     return closestPoint, closestPointIndex, closestDistance
 
@@ -61,6 +68,7 @@ def drawLabels(bvh, closestPointIndex, node = None):
     y = ((1 - uv[:, :, 1]) * (h_label - 1)).astype(int)
 
     canvas = labels[y, x].transpose(1, 0).astype(np.uint8)
+    # canvas = p.transpose(1, 0, 2).astype(np.uint8)
     canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
     canvas = cv2.resize(canvas, imgSize)
 
@@ -84,7 +92,7 @@ def drawBoxes(bvh):
         else: break
 
 if __name__ == "__main__":
-    # cut(segmentID = '20230702185753', layer = 1000, gap = 10)
+    # cut(segmentID = '20230702185753', layer = 1000, gap = 50)
 
     # path = os.path.join('model', 'plane.obj')
     path = os.path.join('model', '20230702185753.obj')
@@ -94,5 +102,5 @@ if __name__ == "__main__":
 
     node = bvh._roots[0].left.left.left.left
     points, indices, distances = drawDistaneField(bvh, node)
-    drawLabels(bvh, indices, node)
+    # drawLabels(bvh, indices, node)
     # drawBoxes(bvh)
