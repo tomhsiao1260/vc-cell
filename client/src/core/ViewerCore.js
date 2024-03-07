@@ -10,6 +10,7 @@ export default class ViewerCore {
     this.meta = meta
     this.render = this.render.bind(this)
     this.canvas = document.querySelector('.webgl')
+    this.inverseBoundsMatrix = new THREE.Matrix4()
     this.volumePass = new FullScreenQuad(new VolumeMaterial())
     this.cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial())
     this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis, this.render) }
@@ -63,6 +64,16 @@ export default class ViewerCore {
     const h = 149
     const d = 126
 
+    const matrix = new THREE.Matrix4()
+    const center = new THREE.Vector3()
+    const quat = new THREE.Quaternion()
+    const scaling = new THREE.Vector3()
+    const s = 1 / Math.max(w, h, d)
+
+    scaling.set(w * s, h * s, d * s)
+    matrix.compose(center, quat, scaling)
+    this.inverseBoundsMatrix.copy(matrix).invert()
+
     const sdfTex = new THREE.WebGL3DRenderTarget(w * r, h * r, d * r)
     sdfTex.texture.format = THREE.RedFormat
     // sdfTex.texture.format = THREE.RGFormat
@@ -92,6 +103,13 @@ export default class ViewerCore {
     if (!this.renderer) return
 
     // this.renderer.render(this.scene, this.camera)
+
+    this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)
+    this.volumePass.material.uniforms.sdfTransformInverse.value
+      .copy(new THREE.Matrix4())
+      .invert()
+      .premultiply(this.inverseBoundsMatrix)
+      .multiply(this.camera.matrixWorld)
     this.volumePass.render(this.renderer)
   }
 }
