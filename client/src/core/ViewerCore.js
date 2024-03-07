@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { VolumeMaterial } from './VolumeMaterial'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import textureViridis from './textures/cm_viridis.png'
 
 export default class ViewerCore {
   constructor() {
@@ -9,6 +10,8 @@ export default class ViewerCore {
     this.canvas = document.querySelector('.webgl')
     this.volumePass = new FullScreenQuad(new VolumeMaterial())
     this.cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial())
+    this.cmtextures = { viridis: new THREE.TextureLoader().load('20230702185753/935.png', this.render) }
+    // this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis, this.render) }
 
     this.init()
   }
@@ -45,11 +48,14 @@ export default class ViewerCore {
 
     const controls = new OrbitControls(this.camera, this.canvas)
     controls.addEventListener('change', this.render)
+
+    this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
   }
 
   render() {
     if (!this.renderer) return
-    this.renderer.render(this.scene, this.camera)
-    // this.volumePass.render(this.renderer)
+
+    // this.renderer.render(this.scene, this.camera)
+    this.volumePass.render(this.renderer)
   }
 }
