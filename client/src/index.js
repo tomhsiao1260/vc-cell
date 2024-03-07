@@ -5,7 +5,6 @@ init()
 
 async function init() {
   const meta = await Loader.getMeta()
-  console.log(meta)
   const viewer = new ViewerCore(meta)
   update(viewer)
 }

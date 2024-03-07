@@ -53,6 +53,8 @@ export default class ViewerCore {
     this.cmtextures.viridis.minFilter = THREE.NearestFilter
     this.cmtextures.viridis.maxFilter = THREE.NearestFilter
     this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
+
+    this.sdfTexGenerate()
   }
 
   async sdfTexGenerate() {
@@ -61,7 +63,7 @@ export default class ViewerCore {
     const h = 149
     const d = 126
 
-    const sdfTex = new THREE.WebGLArrayRenderTarget(w * r, h * r, d * r)
+    const sdfTex = new THREE.WebGL3DRenderTarget(w * r, h * r, d * r)
     sdfTex.texture.format = THREE.RedFormat
     // sdfTex.texture.format = THREE.RGFormat
     sdfTex.texture.type = THREE.FloatType
@@ -71,9 +73,9 @@ export default class ViewerCore {
     const generateSdfPass = new FullScreenQuad(new GenerateSDFMaterial())
 
     for (let i = 0; i < d * r; i++) {
-      const texture = await new THREE.TextureLoader().load(`20230702185753/${i + 935}.png`)
-      texture.texture.minFilter = THREE.NearestFilter
-      texture.texture.magFilter = THREE.NearestFilter
+      const texture = await new THREE.TextureLoader().loadAsync(`20230702185753/${i + 935}.png`)
+      texture.minFilter = THREE.NearestFilter
+      texture.magFilter = THREE.NearestFilter
 
       this.renderer.setRenderTarget(sdfTex, i)
       generateSdfPass.material.uniforms.sliceData.value = texture
@@ -82,7 +84,8 @@ export default class ViewerCore {
     this.renderer.setRenderTarget(null)
     generateSdfPass.material.dispose()
 
-    this.volumePass.material.uniforms.sdfTex = sdfTex
+    this.volumePass.material.uniforms.sdfTex.value = sdfTex.texture
+    this.render()
   }
 
   render() {

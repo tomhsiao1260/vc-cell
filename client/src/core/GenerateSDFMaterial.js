@@ -23,6 +23,7 @@ export class GenerateSDFMaterial extends ShaderMaterial {
         uniform sampler2D sliceData;
 
         void main() {
+            // gl_FragColor = vec4(vUv.x, 0.0, 0.0, 0.0);
             gl_FragColor = texture2D(sliceData, vUv);
         }
         `,
