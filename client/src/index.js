@@ -1,9 +1,12 @@
 import ViewerCore from './core/ViewerCore'
+import Loader from './Loader'
 
 init()
 
 async function init() {
-  const viewer = new ViewerCore()
+  const meta = await Loader.getMeta()
+  console.log(meta)
+  const viewer = new ViewerCore(meta)
   update(viewer)
 }
 
