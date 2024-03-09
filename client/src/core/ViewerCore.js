@@ -6,10 +6,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import textureViridis from './textures/cm_viridis.png'
 
 export default class ViewerCore {
-  constructor(meta) {
-    this.meta = meta
+  constructor({ meta, renderer, canvas }) {
+    this.canvas = canvas
+    this.renderer = renderer
     this.render = this.render.bind(this)
-    this.canvas = document.querySelector('.webgl')
+
+    this.meta = meta
     this.inverseBoundsMatrix = new THREE.Matrix4()
     this.volumePass = new FullScreenQuad(new VolumeMaterial())
     this.cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial())
@@ -19,20 +21,13 @@ export default class ViewerCore {
   }
 
   init() {
-    // renderer setup
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas })
-    this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    this.renderer.setClearColor(0, 0)
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace
-
     // scene setup
     this.scene = new THREE.Scene()
     this.scene.add(this.cube)
 
     // camera setup
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50)
-    this.camera.position.copy(new THREE.Vector3(0, 0, 1).multiplyScalar(1.0))
+    this.camera.position.copy(new THREE.Vector3(0, 0, -1).multiplyScalar(1.0))
     this.camera.up.set(0, -1, 0)
     this.camera.far = 5
     this.camera.updateProjectionMatrix()
@@ -96,6 +91,7 @@ export default class ViewerCore {
     generateSdfPass.material.dispose()
 
     this.volumePass.material.uniforms.sdfTex.value = sdfTex.texture
+    this.volumePass.material.uniforms.size.value.set(w, h, d)
     this.render()
   }
 
@@ -104,12 +100,14 @@ export default class ViewerCore {
 
     // this.renderer.render(this.scene, this.camera)
 
+    this.camera.updateMatrixWorld()
     this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)
     this.volumePass.material.uniforms.sdfTransformInverse.value
       .copy(new THREE.Matrix4())
       .invert()
       .premultiply(this.inverseBoundsMatrix)
       .multiply(this.camera.matrixWorld)
+
     this.volumePass.render(this.renderer)
   }
 }

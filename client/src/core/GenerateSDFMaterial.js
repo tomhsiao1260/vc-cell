@@ -14,6 +14,7 @@ export class GenerateSDFMaterial extends ShaderMaterial {
 
         void main() {
             vUv = uv;
+            vUv.y = 1.0 - vUv.y;
             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
         }
         `,
