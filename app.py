@@ -1,5 +1,6 @@
 import os
 import cv2
+import shutil
 import numpy as np
 from core.MeshBVH import MeshBVH
 from core.math.Triangle import Triangle
@@ -23,6 +24,7 @@ def drawDistaneField(bvh, node = None):
     boxMin = node.boundingData[:3]
     boxMax = node.boundingData[3:]
     layerMin = int(boxMin[2])
+    # layerMax = int(boxMin[2]) + 1
     layerMax = int(boxMax[2])
     center = (boxMin + boxMax) / 2
 
@@ -45,11 +47,15 @@ def drawDistaneField(bvh, node = None):
         canvas = d.transpose(1, 0).astype(np.uint8)
         # canvas = cv2.resize(canvas, imgSize)
 
-        # cv2.imshow('Distance', canvas)
+        cv2.imshow('Distance', canvas)
         # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        cv2.waitKey(10)
+        cv2.destroyAllWindows()
 
         cv2.imwrite(os.path.join(path, f'{layer}.png'), canvas)
+
+    # Copy the generated files to the client folder
+    shutil.copytree('model/20230702185753' , 'client/public/20230702185753', dirs_exist_ok=True)
 
     return closestPoint, closestPointIndex, closestDistance
 
@@ -93,6 +99,13 @@ def drawBoxes(bvh):
 
 if __name__ == "__main__":
     # cut(segmentID = '20230702185753', layer = 1000, gap = 50)
+
+    # p0 = np.array([[[1, 1, 1], [2, 2, 2], [3, 3, 3]], [[4, 4, 4], [5, 5, 5], [6, 6, 6]], [[7, 7, 7], [8, 8, 8], [9, 9, 9]]])
+    # p1 = np.array([[[0, 0, 0], [100, 100, 100], [3, 3, 3]], [[4, 4, 4], [5, 5, 5], [6, 6, 6]], [[7, 7, 7], [8, 8, 8], [9, 9, 9]]])
+    # a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    # b = np.array([4, 5, 6])
+    # c = np.dot(a, b)
+    # c = np.logical_and(np.logical_not(a), b)
 
     # path = os.path.join('model', 'plane.obj')
     path = os.path.join('model', '20230702185753.obj')

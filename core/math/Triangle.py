@@ -64,3 +64,64 @@ class Triangle:
         w = vc * denom
         
         return a + _vab * v + _vac * w
+
+    # https://www.shadertoy.com/view/ttfGWl
+    def closestPointToPointGPU(self, p, i):
+        v0 = self.tri[i][0]
+        v1 = self.tri[i][1]
+        v2 = self.tri[i][2]
+
+        v10 = v1 - v0
+        v21 = v2 - v1
+        v02 = v0 - v2
+
+        p0 = p - v0
+        p1 = p - v1
+        p2 = p - v2
+
+        nor = np.cross(v10, v02)
+        
+        # method 2, in barycentric space
+        q = np.cross(nor, p0)
+        d = 1 / np.dot(nor, nor)
+        u = d * np.dot(q, v02)
+        v = d * np.dot(q, v10)
+        w = 1 - u - v
+
+        # pick up the region
+        spaceU = u < 0
+        spaceV = np.logical_and(np.logical_not(spaceU), v < 0)
+        spaceW = np.logical_and(np.logical_not(np.logical_or(spaceU, spaceV)), w < 0)
+
+        # for space u
+        wp = np.minimum(np.maximum(np.dot(p2, v02) / np.dot(v02, v02), 0), 1)
+        up = 0
+        vp = 1 - wp
+
+        u = np.where(spaceU, up, u)
+        v = np.where(spaceU, vp, v)
+        w = np.where(spaceU, wp, w)
+
+        # for space v
+        up = np.minimum(np.maximum(np.dot(p0, v10) / np.dot(v10, v10), 0), 1)
+        vp = 0
+        wp = 1 - up
+
+        u = np.where(spaceV, up, u)
+        v = np.where(spaceV, vp, v)
+        w = np.where(spaceV, wp, w)
+
+        # for space w
+        vp = np.minimum(np.maximum(np.dot(p1, v21) / np.dot(v21, v21), 0), 1)
+        wp = 0
+        up = 1 - vp
+
+        u = np.where(spaceW, up, u)
+        v = np.where(spaceW, vp, v)
+        w = np.where(spaceW, wp, w)
+
+        u = u[:,:,np.newaxis]
+        v = v[:,:,np.newaxis]
+        w = w[:,:,np.newaxis]
+
+        return u * v1 + v * v2 + w * v0

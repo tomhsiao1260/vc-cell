@@ -18,7 +18,6 @@ export class VolumeMaterial extends ShaderMaterial {
         size: { value: new Vector3() },
         projectionInverse: { value: new Matrix4() },
         sdfTransformInverse: { value: new Matrix4() },
-        renderstyle: { value: 0 }, // 0: MIP, 1: ISO
         renderthreshold: { value: 0 },
       },
 
@@ -73,9 +72,6 @@ export class VolumeMaterial extends ShaderMaterial {
         void main() {
           float fragCoordZ = -1.;
 
-          // float v = texture(sdfTex, vec3(vUv, 0.0)).r;
-          // gl_FragColor = vec4(v, v, v, 1.0); return;
-
           // float v = texture(sdfTex, vec3( vUv, 1.0 )).r;
           // gl_FragColor = vec4(v, v, v, 1.0); return;
 
@@ -119,10 +115,7 @@ export class VolumeMaterial extends ShaderMaterial {
               vec3 step = sdfRayDirection * thickness / float(nsteps);
               vec3 uv = (sdfTransformInverse * nearPoint).xyz + vec3( 0.5 );
 
-              if (renderstyle == 0)
-                cast_mip(uv, step, nsteps, sdfRayDirection);
-              else if (renderstyle == 1)
-                cast_iso(uv, step, nsteps, sdfRayDirection);
+              cast_mip(uv, step, nsteps, sdfRayDirection);
               return;
             }
 
@@ -174,109 +167,6 @@ export class VolumeMaterial extends ShaderMaterial {
 
           // Resolve final color
           gl_FragColor = apply_colormap(max_val);
-        }
-
-        void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
-
-          gl_FragColor = vec4(0.0);   // init transparent
-          vec4 color3 = vec4(0.0);    // final color
-          vec3 dstep = 1.5 / size;  // step to sample derivative
-          vec3 loc = start_loc;
-
-          float low_threshold = renderthreshold - 0.02 * (clim[1] - clim[0]);
-
-          // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
-          // non-constant expression. So we use a hard-coded max, and an additional condition
-          // inside the loop.
-          for (int iter=0; iter<MAX_STEPS; iter++) {
-            if (iter >= nsteps)
-              break;
-
-            // Sample from the 3D texture
-            float val = sample1(loc);
-
-            if (val > low_threshold) {
-              // Take the last interval in smaller steps
-              vec3 iloc = loc - 0.5 * step;
-              vec3 istep = step / float(REFINEMENT_STEPS);
-              for (int i=0; i<REFINEMENT_STEPS; i++) {
-                val = sample1(iloc);
-                if (val > renderthreshold) {
-                  gl_FragColor = add_lighting(val, iloc, dstep, view_ray);
-                    return;
-                }
-                iloc += istep;
-              }
-            }
-
-            // Advance location deeper into the volume
-            loc += step;
-          }
-        }
-
-        vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
-        {
-          // Calculate color by incorporating lighting
-
-          // View direction
-          vec3 V = normalize(view_ray);
-
-          // calculate normal vector from gradient
-          vec3 N;
-          float val1, val2;
-          val1 = sample1(loc + vec3(-step[0], 0.0, 0.0));
-          val2 = sample1(loc + vec3(+step[0], 0.0, 0.0));
-          N[0] = val1 - val2;
-          val = max(max(val1, val2), val);
-          val1 = sample1(loc + vec3(0.0, -step[1], 0.0));
-          val2 = sample1(loc + vec3(0.0, +step[1], 0.0));
-          N[1] = val1 - val2;
-          val = max(max(val1, val2), val);
-          val1 = sample1(loc + vec3(0.0, 0.0, -step[2]));
-          val2 = sample1(loc + vec3(0.0, 0.0, +step[2]));
-          N[2] = val1 - val2;
-          val = max(max(val1, val2), val);
-
-          float gm = length(N); // gradient magnitude
-          N = normalize(N);
-
-          // Flip normal so it points towards viewer
-          float Nselect = float(dot(N, V) > 0.0);
-          N = (2.0 * Nselect - 1.0) * N;  // ==   Nselect * N - (1.0-Nselect)*N;
-
-          // Init colors
-          vec4 ambient_color = vec4(0.0, 0.0, 0.0, 0.0);
-          vec4 diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);
-          vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);
-
-          // note: could allow multiple lights
-          for (int i=0; i<1; i++)
-          {
-            // Get light direction (make sure to prevent zero devision)
-            vec3 L = normalize(view_ray);   //lightDirs[i];
-            float lightEnabled = float( length(L) > 0.0 );
-            L = normalize(L + (1.0 - lightEnabled));
-
-            // Calculate lighting properties
-            float lambertTerm = clamp(dot(N, L), 0.0, 1.0);
-            vec3 H = normalize(L+V); // Halfway vector
-            float specularTerm = pow(max(dot(H, N), 0.0), shininess);
-
-            // Calculate mask
-            float mask1 = lightEnabled;
-
-            // Calculate colors
-            ambient_color +=    mask1 * ambient_color;  // * gl_LightSource[i].ambient;
-            diffuse_color +=    mask1 * lambertTerm;
-            specular_color += mask1 * specularTerm * specular_color;
-          }
-
-          // Calculate final color by componing different components
-          vec4 final_color;
-          vec4 color = apply_colormap(val);
-          final_color = color * (ambient_color + diffuse_color) + specular_color;
-          final_color.a = color.a;
-          return final_color;
         }
       `,
     })
