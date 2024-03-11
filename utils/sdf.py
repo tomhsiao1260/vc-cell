@@ -1,0 +1,46 @@
+import os
+import cv2
+import shutil
+import numpy as np
+from tqdm import tqdm
+
+def calculateSDF(bvh, node = None):
+    # clear output folder
+    path = os.path.join('model', '20230702185753')
+    clientPath = os.path.join('client', 'public', '20230702185753')
+    shutil.rmtree(path, ignore_errors=True)
+    shutil.rmtree(clientPath, ignore_errors=True)
+    if not os.path.exists(path): os.makedirs(path)
+    if not os.path.exists(clientPath): os.makedirs(clientPath)
+
+    if (node is None): node = bvh._roots[0]
+    boxMin = node.boundingData[:3]
+    boxMax = node.boundingData[3:]
+    layerMin = int(boxMin[2])
+    layerMax = int(boxMax[2])
+    center = (boxMin + boxMax) / 2
+
+    sampling = (1.0 * (boxMax - boxMin)).astype('int')
+    windowSize = 1.0 * (boxMax - boxMin)
+    maxDistance = np.max(windowSize[:2])
+    # imgSize = (sampling[0], sampling[1])
+
+    i, j = np.meshgrid(np.arange(sampling[0]), np.arange(sampling[1]), indexing='ij')
+
+    for layer in tqdm(range(layerMin, layerMax, 1)):
+        x = center[0] - windowSize[0] / 2 + (i + 0.5) * windowSize[0] / sampling[0]
+        y = center[1] - windowSize[1] / 2 + (j + 0.5) * windowSize[1] / sampling[1]
+        z = layer * np.full_like(x, 1)
+        p = np.stack((x, y, z), axis=-1)
+
+        closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count, layer)
+        d = 255 * closestDistance / maxDistance
+
+        canvas = d.transpose(1, 0).astype(np.uint8)
+        # canvas = cv2.resize(canvas, imgSize)
+        cv2.imwrite(os.path.join(path, f'{layer}.png'), canvas)
+
+    # Copy the generated files to the client folder
+    shutil.copytree('model/20230702185753' , 'client/public/20230702185753', dirs_exist_ok=True)
+
+    return closestPoint, closestPointIndex, closestDistance
