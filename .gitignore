@@ -2,6 +2,7 @@
 *.png
 *.obj
 *.mtl
+*.tif
 
 env/
 model/
