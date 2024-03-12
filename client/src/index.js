@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-import ViewerCore from './core/ViewerCore'
 import Loader from './Loader'
+import ViewerCore from './core/ViewerCore'
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min'
 
 init()
 
@@ -20,4 +21,13 @@ async function init() {
 
 function update(viewer) {
   viewer.render()
+  updateGUI(viewer)
+}
+
+let gui
+
+function updateGUI(viewer) {
+  if (gui) gui.destroy()
+  gui = new GUI()
+  gui.add(viewer.params, 'surface', 0.001, 0.8).onChange(viewer.render)
 }

@@ -19,7 +19,7 @@ export class VolumeMaterial extends ShaderMaterial {
         projectionInverse: { value: new Matrix4() },
         sdfTransformInverse: { value: new Matrix4() },
         segmentMode: { value: true },
-        surface: { value: 0.005 },
+        surface: { value: 0 },
       },
 
       vertexShader: /* glsl */ `
@@ -112,8 +112,9 @@ export class VolumeMaterial extends ShaderMaterial {
             // gl_FragColor = vec4(0.0, float(nsteps) / size.x, 1.0, 1.0);
             // return;
 
+            // SDF ray march (near & far)
             if (segmentMode) {
-              // ray march (near -> surface)
+              // near -> surface
               for ( int i = 0; i < MAX_STEPS; i ++ ) {
                 // sdf box extends from - 0.5 to 0.5
                 // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds
@@ -132,7 +133,7 @@ export class VolumeMaterial extends ShaderMaterial {
               }
 
               if (intersectsSurface) {
-                // ray march (far -> surface)
+                // far -> surface
                 for ( int i = 0; i < MAX_STEPS; i ++ ) {
                   // sdf box extends from - 0.5 to 0.5
                   // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds

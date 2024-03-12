@@ -5,7 +5,6 @@ import { GenerateSDFMaterial } from './GenerateSDFMaterial'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import textureViridis from './textures/cm_viridis.png'
-import { TIFFLoader } from 'three/addons/loaders/TIFFLoader.js'
 
 export default class ViewerCore {
   constructor({ meta, renderer, canvas }) {
@@ -18,6 +17,9 @@ export default class ViewerCore {
     this.volumePass = new FullScreenQuad(new VolumeMaterial())
     this.cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial())
     this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis, this.render) }
+
+    this.params = {}
+    this.params.surface = 0.05
 
     this.init()
   }
@@ -98,6 +100,8 @@ export default class ViewerCore {
     if (!this.renderer) return
 
     // this.renderer.render(this.scene, this.camera)
+
+    this.volumePass.material.uniforms.surface.value = this.params.surface
 
     this.camera.updateMatrixWorld()
     this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)
