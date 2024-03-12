@@ -56,9 +56,11 @@ export default class ViewerCore {
   }
 
   async sdfTexGenerate() {
-    const sdf = await Loader.getVolumeData('sdf.nrrd')
     const volume = await Loader.getVolumeData('volume.nrrd')
+    const sdf = await Loader.getVolumeData('sdf.nrrd')
+
     const { xLength: w, yLength: h, zLength: d } = volume
+    const { xLength: sw, yLength: sh, zLength: sd } = sdf
 
     const matrix = new THREE.Matrix4()
     const center = new THREE.Vector3()
@@ -77,7 +79,7 @@ export default class ViewerCore {
     volumeTex.magFilter = THREE.LinearFilter
     volumeTex.needsUpdate = true
 
-    const sdfTex = new THREE.Data3DTexture(sdf.data, w, h, d)
+    const sdfTex = new THREE.Data3DTexture(sdf.data, sw, sh, sd)
     sdfTex.format = THREE.RedFormat
     sdfTex.type = THREE.UnsignedByteType
     sdfTex.minFilter = THREE.LinearFilter
@@ -87,7 +89,7 @@ export default class ViewerCore {
     this.volumePass.material.uniforms.sdfTex.value = sdfTex
     this.volumePass.material.uniforms.volumeTex.value = volumeTex
     this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
-    this.volumePass.material.uniforms.size.value.set(volume.xLength, volume.yLength, volume.zLength)
+    this.volumePass.material.uniforms.size.value.set(w, h, d)
 
     this.render()
   }
