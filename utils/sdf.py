@@ -40,10 +40,10 @@ def calculateSDF(bvh, node = None):
         stack.append(d)
 
     # z, x, y -> x, y, z
-    nrrdStack = np.transpose(np.array(stack).astype(np.uint8), (1, 2, 0))
+    nrrdStack = np.transpose(np.array(stack), (1, 2, 0)).astype(np.uint8)
     nrrd.write('model/sdf.nrrd', nrrdStack)
     # z, x, y -> z, y, x
-    imageStack = np.transpose(np.array(stack).astype(np.uint8), (0, 2, 1))
+    imageStack = np.transpose(np.array(stack), (0, 2, 1)).astype(np.uint8)
     tifffile.imwrite('model/sdf.png', imageStack)
 
     # Copy the generated files to the client folder

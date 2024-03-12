@@ -32,13 +32,12 @@ def calculateVolume(boundingData):
         xStack.append(np.concatenate(yStack, axis=1))
 
     volume = np.concatenate(xStack, axis=2)
-    volume = 255 * (volume / np.max(volume))
-
+    volume = (volume / np.max(volume)) * 255
     # z, y, x -> x, y, z
-    nrrdStack = np.transpose(volume.astype(np.uint8), (2, 1, 0))
+    nrrdStack = np.transpose(volume, (2, 1, 0)).astype(np.uint8)
     nrrd.write('model/volume.nrrd', nrrdStack)
     # z, y, x -> z, y, x
-    imageStack = np.transpose(volume.astype(np.uint8), (0, 1, 2))
+    imageStack = np.transpose(volume, (0, 1, 2)).astype(np.uint8)
     tifffile.imwrite('model/volume.png', imageStack)
 
     shutil.copy('model/volume.nrrd' , 'client/public')

@@ -72,7 +72,7 @@ export class VolumeMaterial extends ShaderMaterial {
         void main() {
           float fragCoordZ = -1.;
 
-          // float v = texture(sdfTex, vec3( vUv, 1.0 )).r;
+          // float v = texture(sdfTex, vec3( vUv, 0.5 )).r;
           // gl_FragColor = vec4(v, v, v, 1.0); return;
 
           // get the inverse of the sdf box transform

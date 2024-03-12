@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import Loader from '../Loader'
 import { VolumeMaterial } from './VolumeMaterial'
 import { GenerateSDFMaterial } from './GenerateSDFMaterial'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
@@ -51,17 +52,13 @@ export default class ViewerCore {
     this.cmtextures.viridis.maxFilter = THREE.NearestFilter
     this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
 
-    const result = await new TIFFLoader().loadAsync('stack.tif')
-    console.log(result)
-
     this.sdfTexGenerate()
   }
 
   async sdfTexGenerate() {
-    const r = 1.0
-    const w = 186
-    const h = 149
-    const d = 126
+    const sdf = await Loader.getVolumeData('sdf.nrrd')
+    const volume = await Loader.getVolumeData('volume.nrrd')
+    const { xLength: w, yLength: h, zLength: d } = volume
 
     const matrix = new THREE.Matrix4()
     const center = new THREE.Vector3()
@@ -73,29 +70,18 @@ export default class ViewerCore {
     matrix.compose(center, quat, scaling)
     this.inverseBoundsMatrix.copy(matrix).invert()
 
-    const sdfTex = new THREE.WebGL3DRenderTarget(w * r, h * r, d * r)
-    sdfTex.texture.format = THREE.RedFormat
-    // sdfTex.texture.format = THREE.RGFormat
-    sdfTex.texture.type = THREE.FloatType
-    sdfTex.texture.minFilter = THREE.LinearFilter
-    sdfTex.texture.magFilter = THREE.LinearFilter
+    const sdfTex = new THREE.Data3DTexture(volume.data, w, h, d)
+    sdfTex.format = THREE.RedFormat
+    // sdfTex.type = THREE.FloatType
+    sdfTex.type = THREE.UnsignedByteType
+    sdfTex.minFilter = THREE.LinearFilter
+    sdfTex.magFilter = THREE.LinearFilter
+    sdfTex.unpackAlignment = 1
+    sdfTex.needsUpdate = true
 
-    const generateSdfPass = new FullScreenQuad(new GenerateSDFMaterial())
+    this.volumePass.material.uniforms.sdfTex.value = sdfTex
+    this.volumePass.material.uniforms.size.value.set(volume.xLength, volume.yLength, volume.zLength)
 
-    for (let i = 0; i < d * r; i++) {
-      const texture = await new THREE.TextureLoader().loadAsync(`20230702185753/${i + 935}.png`)
-      texture.minFilter = THREE.NearestFilter
-      texture.magFilter = THREE.NearestFilter
-
-      this.renderer.setRenderTarget(sdfTex, i)
-      generateSdfPass.material.uniforms.sliceData.value = texture
-      generateSdfPass.render(this.renderer)
-    }
-    this.renderer.setRenderTarget(null)
-    generateSdfPass.material.dispose()
-
-    this.volumePass.material.uniforms.sdfTex.value = sdfTex.texture
-    this.volumePass.material.uniforms.size.value.set(w, h, d)
     this.render()
   }
 
