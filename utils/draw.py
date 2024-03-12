@@ -1,16 +1,28 @@
 import os
 import cv2
+import tifffile
 import numpy as np
 from core.objects.MeshBVHHelper import MeshBVHHelper
 
-def drawImage():
-    layerMin = 935
-    layerMax = 1065
+# def drawImage(path):
+#     layerMin = 935
+#     layerMax = 1065
 
-    for layer in range(layerMin, layerMax, 1):
-        canvas = cv2.imread(f'model/20230702185753/{layer}.png')
+#     for layer in range(layerMin, layerMax, 1):
+#         image = cv2.imread(f'model/20230702185753/{layer}.png')
 
-        cv2.imshow('Distance', canvas)
+#         cv2.imshow('Distance', image)
+#         # cv2.waitKey(0)
+#         cv2.waitKey(10)
+#         cv2.destroyAllWindows()
+
+def drawImage(path):
+    data = tifffile.imread(path)
+
+    for layer in range(data.shape[0]):
+        image = data[layer, :, :]
+
+        cv2.imshow('Volume', image)
         # cv2.waitKey(0)
         cv2.waitKey(10)
         cv2.destroyAllWindows()

@@ -1,6 +1,7 @@
 import os
-import cv2
+import nrrd
 import shutil
+import tifffile
 import numpy as np
 from tqdm import tqdm
 
@@ -17,14 +18,15 @@ def calculateSDF(bvh, node = None):
     boxMin = node.boundingData[:3]
     boxMax = node.boundingData[3:]
     layerMin = int(boxMin[2])
+    # layerMax = int(boxMin[2]) + 5
     layerMax = int(boxMax[2])
     center = (boxMin + boxMax) / 2
 
     sampling = (1.0 * (boxMax - boxMin)).astype('int')
     windowSize = 1.0 * (boxMax - boxMin)
     maxDistance = np.max(windowSize[:2])
-    # imgSize = (sampling[0], sampling[1])
 
+    stack = []
     i, j = np.meshgrid(np.arange(sampling[0]), np.arange(sampling[1]), indexing='ij')
 
     for layer in tqdm(range(layerMin, layerMax, 1)):
@@ -35,12 +37,16 @@ def calculateSDF(bvh, node = None):
 
         closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count, layer)
         d = 255 * closestDistance / maxDistance
+        stack.append(d)
 
-        canvas = d.transpose(1, 0).astype(np.uint8)
-        # canvas = cv2.resize(canvas, imgSize)
-        cv2.imwrite(os.path.join(path, f'{layer}.png'), canvas)
+    # z, x, y -> x, y, z
+    nrrdStack = np.transpose(np.array(stack).astype(np.uint8), (1, 2, 0))
+    nrrd.write('model/sdf.nrrd', nrrdStack)
+    # z, x, y -> z, y, x
+    imageStack = np.transpose(np.array(stack).astype(np.uint8), (0, 2, 1))
+    tifffile.imwrite('model/sdf.png', imageStack)
 
     # Copy the generated files to the client folder
-    shutil.copytree('model/20230702185753' , 'client/public/20230702185753', dirs_exist_ok=True)
+    shutil.copy('model/sdf.nrrd' , 'client/public')
 
     return closestPoint, closestPointIndex, closestDistance

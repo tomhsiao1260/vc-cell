@@ -20,23 +20,6 @@ class MeshBVH:
         closestPointIndex = np.full((w, h), 0)
         closestDistance = np.full((w, h), float('inf'))
 
-        # gap = 30
-        # faces = self.data['faces'][offset: offset + count]
-        # faces = faces[:,:,0] - 1
-        # vertices = self.data['vertices'][faces]
-        # lowerBound = vertices[:,0,2] > (layer - gap)
-        # upperBound = vertices[:,0,2] < (layer + gap)
-        # mask = np.logical_and(lowerBound, upperBound)
-        # faces = faces[mask]
-        # selected_indices = np.unique(faces)
-
-        # for i in selected_indices:
-        #     target = self.data['vertices'][i]
-        #     d = np.linalg.norm(point - target, axis=2)
-        #     closestDistance = np.minimum(closestDistance, d)
-        #     closestPoint[(closestDistance == d)] = target
-        #     closestPointIndex[(closestDistance == d)] = i
-
         gap = 30
         triIndices = self.data['faces'][offset: offset + count]
         triangles = self.data['vertices'][triIndices[:,:,0] - 1]

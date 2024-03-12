@@ -25,9 +25,8 @@ if __name__ == "__main__":
 
     node = bvh._roots[0].left.left.left.left
     # points, indices, distances = calculateSDF(bvh, node)
+    # calculateVolume(node.boundingData)
 
-    calculateVolume(node.boundingData)
-
-    # drawImage()
+    drawImage('model/volume.png')
     # drawLabels(bvh, indices, node)
     # drawBoxes(bvh)

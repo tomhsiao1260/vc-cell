@@ -1,4 +1,5 @@
 import os
+import nrrd
 import shutil
 import tifffile
 import numpy as np
@@ -30,5 +31,14 @@ def calculateVolume(boundingData):
             yStack.append(np.concatenate(zStack, axis=0))
         xStack.append(np.concatenate(yStack, axis=1))
 
-    tifffile.imwrite('model/stack.tif', np.concatenate(xStack, axis=2))
-    shutil.copy('model/stack.tif' , 'client/public')
+    volume = np.concatenate(xStack, axis=2)
+    volume = 255 * (volume / np.max(volume))
+
+    # z, y, x -> x, y, z
+    nrrdStack = np.transpose(volume.astype(np.uint8), (2, 1, 0))
+    nrrd.write('model/volume.nrrd', nrrdStack)
+    # z, y, x -> z, y, x
+    imageStack = np.transpose(volume.astype(np.uint8), (0, 1, 2))
+    tifffile.imwrite('model/volume.png', imageStack)
+
+    shutil.copy('model/volume.nrrd' , 'client/public')

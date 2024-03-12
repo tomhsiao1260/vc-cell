@@ -1,3 +1,7 @@
+nptyping==2.5.0
 numpy==1.26.3
 opencv-python==4.9.0.80
+pynrrd==1.0.0
+tifffile==2024.2.12
 tqdm==4.66.2
+typing_extensions==4.10.0

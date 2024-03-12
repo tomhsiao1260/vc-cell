@@ -4,6 +4,7 @@ import { GenerateSDFMaterial } from './GenerateSDFMaterial'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import textureViridis from './textures/cm_viridis.png'
+import { TIFFLoader } from 'three/addons/loaders/TIFFLoader.js'
 
 export default class ViewerCore {
   constructor({ meta, renderer, canvas }) {
@@ -20,7 +21,7 @@ export default class ViewerCore {
     this.init()
   }
 
-  init() {
+  async init() {
     // scene setup
     this.scene = new THREE.Scene()
     this.scene.add(this.cube)
@@ -49,6 +50,9 @@ export default class ViewerCore {
     this.cmtextures.viridis.minFilter = THREE.NearestFilter
     this.cmtextures.viridis.maxFilter = THREE.NearestFilter
     this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
+
+    const result = await new TIFFLoader().loadAsync('stack.tif')
+    console.log(result)
 
     this.sdfTexGenerate()
   }

@@ -3,6 +3,7 @@
 *.obj
 *.mtl
 *.tif
+*.nrrd
 
 env/
 model/
