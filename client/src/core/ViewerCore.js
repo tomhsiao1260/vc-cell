@@ -70,16 +70,23 @@ export default class ViewerCore {
     matrix.compose(center, quat, scaling)
     this.inverseBoundsMatrix.copy(matrix).invert()
 
-    const sdfTex = new THREE.Data3DTexture(volume.data, w, h, d)
+    const volumeTex = new THREE.Data3DTexture(volume.data, w, h, d)
+    volumeTex.format = THREE.RedFormat
+    volumeTex.type = THREE.UnsignedByteType
+    volumeTex.minFilter = THREE.LinearFilter
+    volumeTex.magFilter = THREE.LinearFilter
+    volumeTex.needsUpdate = true
+
+    const sdfTex = new THREE.Data3DTexture(sdf.data, w, h, d)
     sdfTex.format = THREE.RedFormat
-    // sdfTex.type = THREE.FloatType
     sdfTex.type = THREE.UnsignedByteType
     sdfTex.minFilter = THREE.LinearFilter
     sdfTex.magFilter = THREE.LinearFilter
-    sdfTex.unpackAlignment = 1
     sdfTex.needsUpdate = true
 
     this.volumePass.material.uniforms.sdfTex.value = sdfTex
+    this.volumePass.material.uniforms.volumeTex.value = volumeTex
+    this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
     this.volumePass.material.uniforms.size.value.set(volume.xLength, volume.yLength, volume.zLength)
 
     this.render()

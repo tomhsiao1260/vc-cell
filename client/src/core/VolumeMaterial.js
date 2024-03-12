@@ -14,7 +14,8 @@ export class VolumeMaterial extends ShaderMaterial {
         surface: { value: 0 },
         cmdata: { value: null },
         sdfTex: { value: null },
-        clim: { value: new Vector2(0.0, 0.8) },
+        volumeTex: { value: null },
+        clim: { value: new Vector2(0.4, 1.0) },
         size: { value: new Vector3() },
         projectionInverse: { value: new Matrix4() },
         sdfTransformInverse: { value: new Matrix4() },
@@ -37,6 +38,7 @@ export class VolumeMaterial extends ShaderMaterial {
         uniform vec2 clim;
         uniform vec3 size;
         uniform sampler3D sdfTex;
+        uniform sampler3D volumeTex;
         uniform sampler2D cmdata;
         uniform mat4 projectionInverse;
         uniform mat4 sdfTransformInverse;
@@ -72,7 +74,7 @@ export class VolumeMaterial extends ShaderMaterial {
         void main() {
           float fragCoordZ = -1.;
 
-          // float v = texture(sdfTex, vec3( vUv, 0.5 )).r;
+          // float v = texture(volumeTex, vec3( vUv, 0.5 )).r;
           // gl_FragColor = vec4(v, v, v, 1.0); return;
 
           // get the inverse of the sdf box transform
@@ -126,13 +128,13 @@ export class VolumeMaterial extends ShaderMaterial {
 
         float sample1(vec3 texcoords) {
           /* Sample float value from a 3D texture. Assumes intensity data. */
-          return texture(sdfTex, texcoords.xyz).r;
+          return texture(volumeTex, texcoords.xyz).r;
         }
 
         vec4 apply_colormap(float val) {
           val = (val - clim[0]) / (clim[1] - clim[0]);
-          return vec4(vec3(val), 1.0);
-          // return texture2D(cmdata, vec2(val, 0.5));
+          // return vec4(vec3(val), 1.0);
+          return texture2D(cmdata, vec2(val, 0.5));
         }
 
         void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
