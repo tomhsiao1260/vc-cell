@@ -14,6 +14,8 @@ export class VolumeMaterial extends ShaderMaterial {
         cmdata: { value: null },
         sdfTex: { value: null },
         volumeTex: { value: null },
+        uTex: { value: null },
+        vTex: { value: null },
         clim: { value: new Vector2(0.4, 1.0) },
         size: { value: new Vector3() },
         projectionInverse: { value: new Matrix4() },
@@ -42,6 +44,8 @@ export class VolumeMaterial extends ShaderMaterial {
         uniform vec3 size;
         uniform sampler3D sdfTex;
         uniform sampler3D volumeTex;
+        uniform sampler3D uTex;
+        uniform sampler3D vTex;
         uniform sampler2D cmdata;
         uniform mat4 projectionInverse;
         uniform mat4 sdfTransformInverse;
@@ -166,7 +170,10 @@ export class VolumeMaterial extends ShaderMaterial {
               vec3 step = sdfRayDirection * thickness / float(nsteps);
               vec3 uv = (sdfTransformInverse * nearPoint).xyz + vec3( 0.5 );
 
-              cast_mip(uv, step, nsteps, sdfRayDirection);
+              float uI = texture(uTex, uv).r;
+              float vI = texture(vTex, uv).r;
+              gl_FragColor = vec4(vec3(uI, vI, 1.0), 1.0);
+              // cast_mip(uv, step, nsteps, sdfRayDirection);
               return;
             }
 

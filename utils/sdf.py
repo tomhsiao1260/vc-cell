@@ -26,7 +26,8 @@ def calculateSDF(bvh, node = None):
     windowSize = 1.0 * (boxMax - boxMin)
     maxDistance = np.max(windowSize[:2])
 
-    stack = []
+    dStack = []
+    indexStack = []
     i, j = np.meshgrid(np.arange(sampling[0]), np.arange(sampling[1]), indexing='ij')
 
     for layer in tqdm(range(layerMin, layerMax, 1)):
@@ -37,16 +38,39 @@ def calculateSDF(bvh, node = None):
 
         closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count, layer)
         d = 255 * closestDistance / maxDistance
-        stack.append(d)
+        indexStack.append(closestPointIndex)
+        dStack.append(d)
 
     # z, x, y -> x, y, z
-    nrrdStack = np.transpose(np.array(stack), (1, 2, 0)).astype(np.uint8)
+    nrrdStack = np.transpose(np.array(dStack), (1, 2, 0)).astype(np.uint8)
     nrrd.write('model/sdf.nrrd', nrrdStack)
     # z, x, y -> z, y, x
-    imageStack = np.transpose(np.array(stack), (0, 2, 1)).astype(np.uint8)
+    imageStack = np.transpose(np.array(dStack), (0, 2, 1)).astype(np.uint8)
     tifffile.imwrite('model/sdf.png', imageStack)
 
     # Copy the generated files to the client folder
     shutil.copy('model/sdf.nrrd' , 'client/public')
 
-    return closestPoint, closestPointIndex, closestDistance
+    uvStack = bvh.data['uvs'][np.array(indexStack)]
+    uStack = 255 * uvStack[:, :, :, 0]
+    vStack = 255 * uvStack[:, :, :, 1]
+
+    # z, x, y -> x, y, z
+    nrrdStack = np.transpose(np.array(uStack), (1, 2, 0)).astype(np.uint8)
+    nrrd.write('model/u.nrrd', nrrdStack)
+    # z, x, y -> z, y, x
+    imageStack = np.transpose(np.array(uStack), (0, 2, 1)).astype(np.uint8)
+    tifffile.imwrite('model/u.png', imageStack)
+
+    # Copy the generated files to the client folder
+    shutil.copy('model/u.nrrd' , 'client/public')
+
+    # z, x, y -> x, y, z
+    nrrdStack = np.transpose(np.array(vStack), (1, 2, 0)).astype(np.uint8)
+    nrrd.write('model/v.nrrd', nrrdStack)
+    # z, x, y -> z, y, x
+    imageStack = np.transpose(np.array(vStack), (0, 2, 1)).astype(np.uint8)
+    tifffile.imwrite('model/v.png', imageStack)
+
+    # Copy the generated files to the client folder
+    shutil.copy('model/v.nrrd' , 'client/public')

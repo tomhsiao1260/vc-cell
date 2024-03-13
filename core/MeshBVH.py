@@ -26,6 +26,7 @@ class MeshBVH:
         lowerBound = triangles[:,0,2] > (layer - gap)
         upperBound = triangles[:,0,2] < (layer + gap)
         mask = np.logical_and(lowerBound, upperBound)
+        index = np.nonzero(mask)[0]
         triangles = triangles[mask]
         tri = Triangle(triangles)
 
@@ -34,7 +35,7 @@ class MeshBVH:
             d = np.linalg.norm(point - target, axis=2)
             closestDistance = np.minimum(closestDistance, d)
             closestPoint = np.where((closestDistance == d)[:, :, np.newaxis], target, closestPoint)
-            closestPointIndex = np.where((closestDistance == d), i, closestPointIndex)
+            closestPointIndex = np.where((closestDistance == d), index[i], closestPointIndex)
 
         return closestPoint, closestPointIndex, closestDistance
 

@@ -16,7 +16,7 @@ export default class ViewerCore {
     this.inverseBoundsMatrix = new THREE.Matrix4()
     this.volumePass = new FullScreenQuad(new VolumeMaterial())
     this.cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial())
-    this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis, this.render) }
+    this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis) }
 
     this.params = {}
     this.params.surface = 0.05
@@ -58,11 +58,15 @@ export default class ViewerCore {
   }
 
   async sdfTexGenerate() {
+    const label = await Loader.getTexture('inklabels.png')
     const volume = await Loader.getVolumeData('volume.nrrd')
     const sdf = await Loader.getVolumeData('sdf.nrrd')
+    const u = await Loader.getVolumeData('u.nrrd')
+    const v = await Loader.getVolumeData('v.nrrd')
 
     const { xLength: w, yLength: h, zLength: d } = volume
     const { xLength: sw, yLength: sh, zLength: sd } = sdf
+    const { xLength: uvw, yLength: uvh, zLength: uvd } = u
 
     const matrix = new THREE.Matrix4()
     const center = new THREE.Vector3()
@@ -88,10 +92,28 @@ export default class ViewerCore {
     sdfTex.magFilter = THREE.LinearFilter
     sdfTex.needsUpdate = true
 
+    const uTex = new THREE.Data3DTexture(u.data, uvw, uvh, uvd)
+    uTex.format = THREE.RedFormat
+    uTex.type = THREE.UnsignedByteType
+    uTex.minFilter = THREE.LinearFilter
+    uTex.magFilter = THREE.LinearFilter
+    uTex.needsUpdate = true
+
+    const vTex = new THREE.Data3DTexture(v.data, uvw, uvh, uvd)
+    vTex.format = THREE.RedFormat
+    vTex.type = THREE.UnsignedByteType
+    vTex.minFilter = THREE.LinearFilter
+    vTex.magFilter = THREE.LinearFilter
+    vTex.needsUpdate = true
+
+    // const
+
     this.volumePass.material.uniforms.sdfTex.value = sdfTex
     this.volumePass.material.uniforms.volumeTex.value = volumeTex
-    this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
+    this.volumePass.material.uniforms.uTex.value = uTex
+    this.volumePass.material.uniforms.vTex.value = vTex
     this.volumePass.material.uniforms.size.value.set(w, h, d)
+    this.volumePass.material.uniforms.cmdata.value = this.cmtextures.viridis
 
     this.render()
   }
