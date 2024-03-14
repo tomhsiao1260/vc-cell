@@ -17,8 +17,9 @@ def calculateSDF(bvh, node = None):
     if (node is None): node = bvh._roots[0]
     boxMin = node.boundingData[:3]
     boxMax = node.boundingData[3:]
+    # layerMin = int(boxMin[2]) + 50
     layerMin = int(boxMin[2])
-    # layerMax = int(boxMin[2]) + 3
+    # layerMax = int(boxMin[2]) + 55
     layerMax = int(boxMax[2])
     center = (boxMin + boxMax) / 2
 
@@ -28,6 +29,8 @@ def calculateSDF(bvh, node = None):
 
     dStack = []
     indexStack = []
+    pointStack = []
+
     i, j = np.meshgrid(np.arange(sampling[0]), np.arange(sampling[1]), indexing='ij')
 
     for layer in tqdm(range(layerMin, layerMax, 1)):
@@ -39,6 +42,7 @@ def calculateSDF(bvh, node = None):
         closestPoint, closestPointIndex, closestDistance = bvh.closestPointToPointGPU(p, node._offset, node._count, layer)
         d = 255 * closestDistance / maxDistance
         indexStack.append(closestPointIndex)
+        pointStack.append(closestPoint)
         dStack.append(d)
 
     # z, x, y -> x, y, z
@@ -51,13 +55,14 @@ def calculateSDF(bvh, node = None):
     # Copy the generated files to the client folder
     shutil.copy('model/sdf.nrrd' , 'client/public')
 
-    indexStack = np.array(indexStack)
-    indexStack = bvh.data['faces'][indexStack][:, :, :, 0, 0] - 1
-    # print(bvh.data['faces'][indexStack][0, 0, 0, :, 0])
-    uvStack = bvh.data['uvs'][indexStack]
+    indices = np.array(indexStack)
+    point = np.array(pointStack)
+    indices = bvh.data['faces'][indices][:, :, :, :, 0] - 1
+    # indices = bvh.data['faces'][indices][:, :, :, 0, 0] - 1
 
-    # print(uvStack.shape)
-    # print(uvStack[0, :, 70])
+    triUVs = bvh.data['uvs'][indices]
+    triVertices = bvh.data['vertices'][indices]
+    uvStack = calUV(point, triVertices, triUVs)
 
     uStack = 255 * uvStack[:, :, :, 0]
     vStack = 255 * uvStack[:, :, :, 1]
@@ -83,3 +88,28 @@ def calculateSDF(bvh, node = None):
 
     # Copy the generated files to the client folder
     shutil.copy('model/v.nrrd' , 'client/public')
+
+# bi-linear-interpolation
+def calUV(point, triVertices, triUVs):
+
+    triV = triVertices - triVertices[:, :, :, 0, np.newaxis]
+    p = point - triVertices[:, :, :, 0]
+    l = np.linalg.norm(triV, axis=-1) + 1e-5
+
+    r = np.einsum('ijklm, ijkm -> ijkl', triV, p)
+    r /= l * l
+
+    uvStack = (2 - r[:, :, :, 1, np.newaxis] - r[:, :, :, 2, np.newaxis]) * triUVs[:, :, :, 0] / 2
+    uvStack += r[:, :, :, 1, np.newaxis] * triUVs[:, :, :, 1] / 2
+    uvStack += r[:, :, :, 2, np.newaxis] * triUVs[:, :, :, 2] / 2
+
+    # print(triVertices[4, 1, 0])
+    # print(point[4, 1, 0])
+    # print(triVertices[4, 100, 0])
+    # print(point[4, 100, 0])
+    # print(triVertices[4, 45, 0])
+    # print(point[4, 45, 0])
+
+    # uvStack = triUVs[:, :, :, 0]
+    
+    return uvStack

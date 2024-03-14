@@ -27,6 +27,6 @@ if __name__ == "__main__":
     calculateSDF(bvh, node)
     # calculateVolume(node.boundingData)
 
-    # drawImage('model/u.png')
+    # drawImage('model/volume.png')
     # drawLabels(bvh, indices, node)
     # drawBoxes(bvh)
