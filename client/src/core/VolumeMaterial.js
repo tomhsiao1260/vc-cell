@@ -12,6 +12,7 @@ export class VolumeMaterial extends ShaderMaterial {
 
       uniforms: {
         cmdata: { value: null },
+        label: { value: null },
         sdfTex: { value: null },
         volumeTex: { value: null },
         uTex: { value: null },
@@ -42,6 +43,7 @@ export class VolumeMaterial extends ShaderMaterial {
         varying vec2 vUv;
         uniform vec2 clim;
         uniform vec3 size;
+        uniform sampler2D label;
         uniform sampler3D sdfTex;
         uniform sampler3D volumeTex;
         uniform sampler3D uTex;
@@ -172,7 +174,9 @@ export class VolumeMaterial extends ShaderMaterial {
 
               float uI = texture(uTex, uv).r;
               float vI = texture(vTex, uv).r;
-              gl_FragColor = vec4(vec3(uI, vI, 1.0), 1.0);
+              // gl_FragColor = vec4(vec3(uI, vI, 1.0), 1.0);
+              float v = texture(label, vec2(uI, vI)).r;
+              gl_FragColor = vec4(v, v, v, 1.0);
               // cast_mip(uv, step, nsteps, sdfRayDirection);
               return;
             }

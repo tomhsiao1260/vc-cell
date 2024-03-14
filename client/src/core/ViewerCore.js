@@ -108,6 +108,7 @@ export default class ViewerCore {
 
     // const
 
+    this.volumePass.material.uniforms.label.value = label
     this.volumePass.material.uniforms.sdfTex.value = sdfTex
     this.volumePass.material.uniforms.volumeTex.value = volumeTex
     this.volumePass.material.uniforms.uTex.value = uTex

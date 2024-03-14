@@ -18,7 +18,7 @@ def calculateSDF(bvh, node = None):
     boxMin = node.boundingData[:3]
     boxMax = node.boundingData[3:]
     layerMin = int(boxMin[2])
-    # layerMax = int(boxMin[2]) + 5
+    # layerMax = int(boxMin[2]) + 3
     layerMax = int(boxMax[2])
     center = (boxMin + boxMax) / 2
 
@@ -51,9 +51,18 @@ def calculateSDF(bvh, node = None):
     # Copy the generated files to the client folder
     shutil.copy('model/sdf.nrrd' , 'client/public')
 
-    uvStack = bvh.data['uvs'][np.array(indexStack)]
+    indexStack = np.array(indexStack)
+    indexStack = bvh.data['faces'][indexStack][:, :, :, 0, 0] - 1
+    # print(bvh.data['faces'][indexStack][0, 0, 0, :, 0])
+    uvStack = bvh.data['uvs'][indexStack]
+
+    # print(uvStack.shape)
+    # print(uvStack[0, :, 70])
+
     uStack = 255 * uvStack[:, :, :, 0]
     vStack = 255 * uvStack[:, :, :, 1]
+    # uStack = 255 * (uStack - np.min(uStack)) / (np.max(uStack) - np.min(uStack))
+    # vStack = 255 * (vStack - np.min(vStack)) / (np.max(vStack) - np.min(vStack))
 
     # z, x, y -> x, y, z
     nrrdStack = np.transpose(np.array(uStack), (1, 2, 0)).astype(np.uint8)
