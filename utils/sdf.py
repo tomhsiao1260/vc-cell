@@ -89,26 +89,26 @@ def calculateSDF(bvh, node = None):
     # Copy the generated files to the client folder
     shutil.copy('model/v.nrrd' , 'client/public')
 
-# bi-linear-interpolation
+# Bilinear Interpolation
 def calUV(point, triVertices, triUVs):
 
-    triV = triVertices - triVertices[:, :, :, 0, np.newaxis]
-    p = point - triVertices[:, :, :, 0]
-    l = np.linalg.norm(triV, axis=-1) + 1e-5
+    # triV = triVertices - triVertices[:, :, :, 0, np.newaxis]
+    # p = point - triVertices[:, :, :, 0]
+    # l = np.linalg.norm(triV, axis=-1) + 1e-5
 
-    r = np.einsum('ijklm, ijkm -> ijkl', triV, p)
-    r /= l * l
+    # r = np.einsum('ijklm, ijkm -> ijkl', triV, p)
+    # r /= l * l
 
-    uvStack = (2 - r[:, :, :, 1, np.newaxis] - r[:, :, :, 2, np.newaxis]) * triUVs[:, :, :, 0] / 2
-    uvStack += r[:, :, :, 1, np.newaxis] * triUVs[:, :, :, 1] / 2
-    uvStack += r[:, :, :, 2, np.newaxis] * triUVs[:, :, :, 2] / 2
+    # uvStack = (2 - r[:, :, :, 1, np.newaxis] - r[:, :, :, 2, np.newaxis]) * triUVs[:, :, :, 0] / 2
+    # uvStack += r[:, :, :, 1, np.newaxis] * triUVs[:, :, :, 1] / 2
+    # uvStack += r[:, :, :, 2, np.newaxis] * triUVs[:, :, :, 2] / 2
 
-    # print(triVertices[4, 1, 0])
-    # print(point[4, 1, 0])
-    # print(triVertices[4, 100, 0])
-    # print(point[4, 100, 0])
-    # print(triVertices[4, 45, 0])
-    # print(point[4, 45, 0])
+    d = np.linalg.norm(triVertices - point[:, :, :, np.newaxis, :], axis=-1)
+    d += 1e-5
+    d = 1 / d
+    d = d / np.sum(d, axis=-1)[:, :, :, np.newaxis]
+
+    uvStack = np.sum(triUVs * d[..., np.newaxis], axis=-2)
 
     # uvStack = triUVs[:, :, :, 0]
     

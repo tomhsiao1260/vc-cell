@@ -6,6 +6,8 @@ from utils.sdf import calculateSDF
 from utils.draw import drawImage, drawBoxes
 from utils.volume import calculateVolume
 
+import numpy as np
+
 def cut(segmentID, layer, gap):
     path = f'../full-scrolls/Scroll1.volpkg/paths/{segmentID}/{segmentID}.obj'
     data = parse_obj(path)
@@ -15,6 +17,7 @@ def cut(segmentID, layer, gap):
     save_obj(os.path.join('model', f'{segmentID}.obj'), data, materialName = segmentID)
 
 if __name__ == "__main__":
+    pass
     # cut(segmentID = '20230702185753', layer = 1000, gap = 50)
 
     # path = os.path.join('model', 'plane.obj')
@@ -30,3 +33,6 @@ if __name__ == "__main__":
     # drawImage('model/volume.png')
     # drawLabels(bvh, indices, node)
     # drawBoxes(bvh)
+
+
+
