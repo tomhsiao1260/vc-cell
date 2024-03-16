@@ -3,10 +3,8 @@ from core.MeshBVH import MeshBVH
 from core.utils.cut import cut_obj, re_index
 from core.utils.loader import parse_obj, save_obj
 from utils.sdf import calculateSDF
-from utils.draw import drawImage, drawBoxes
+from utils.draw import drawImage, drawUV, drawBoxes
 from utils.volume import calculateVolume
-
-import numpy as np
 
 def cut(segmentID, layer, gap):
     path = f'../full-scrolls/Scroll1.volpkg/paths/{segmentID}/{segmentID}.obj'
@@ -26,10 +24,12 @@ if __name__ == "__main__":
     data = parse_obj(path)
     bvh = MeshBVH(data)
 
-    node = bvh._roots[0].left.left.left.left
-    calculateSDF(bvh, node)
+    node = bvh._roots[0]
+    # node = bvh._roots[0].left.left.left.left
+    # calculateSDF(bvh, node)
     # calculateVolume(node.boundingData)
 
+    drawUV(bvh)
     # drawImage('model/volume.png')
     # drawLabels(bvh, indices, node)
     # drawBoxes(bvh)

@@ -4,18 +4,6 @@ import tifffile
 import numpy as np
 from core.objects.MeshBVHHelper import MeshBVHHelper
 
-# def drawImage(path):
-#     layerMin = 935
-#     layerMax = 1065
-
-#     for layer in range(layerMin, layerMax, 1):
-#         image = cv2.imread(f'model/20230702185753/{layer}.png')
-
-#         cv2.imshow('Distance', image)
-#         # cv2.waitKey(0)
-#         cv2.waitKey(10)
-#         cv2.destroyAllWindows()
-
 def drawImage(path):
     data = tifffile.imread(path)
 
@@ -27,28 +15,34 @@ def drawImage(path):
         cv2.waitKey(10)
         cv2.destroyAllWindows()
 
-# def drawLabels(bvh, closestPointIndex, node = None):
-#     if (node is None): node = bvh._roots[0]
-#     boxMin = node.boundingData[:3]
-#     boxMax = node.boundingData[3:]
-#     windowSize = 1.0 * (boxMax - boxMin)
-#     imgSize = (500, int(500 * windowSize[1] / windowSize[0]))
+def drawUV(bvh):
+    w, h = 869, 675
+    image = np.zeros((h, w, 3), dtype=np.uint8)
 
-#     labels = cv2.imread(os.path.join('model', '20230702185753_inklabels.png'), cv2.IMREAD_UNCHANGED)
+    drawUVNode(image, bvh, bvh._roots[0].left, color = (255, 0, 0))
+    drawUVNode(image, bvh, bvh._roots[0].right, color = (0, 255, 0))
 
-#     h_label, w_label = labels.shape
-#     uv = data['uvs'][closestPointIndex]
-#     x = (uv[:, :, 0] * (w_label - 1)).astype(int)
-#     y = ((1 - uv[:, :, 1]) * (h_label - 1)).astype(int)
+    cv2.imshow('UV', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-#     canvas = labels[y, x].transpose(1, 0).astype(np.uint8)
-#     # canvas = p.transpose(1, 0, 2).astype(np.uint8)
-#     canvas = cv2.cvtColor(canvas, cv2.COLOR_RGB2BGR)
-#     canvas = cv2.resize(canvas, imgSize)
+def drawUVNode(image, bvh, node, color = (255, 255, 255)):
+    h, w, _ = image.shape
+    offset = node._offset
+    count = node._count
 
-#     cv2.imshow('Label', canvas)
-#     cv2.waitKey(0)
-#     cv2.destroyAllWindows()
+    triIndices = bvh.data['faces'][offset: offset + count]
+    triUVs = bvh.data['uvs'][triIndices[:,:,0] - 1]
+
+    triUVs[:, :, 0] *= w
+    triUVs[:, :, 1] *= h
+    triUVs = triUVs.astype(int)
+
+    for tri in triUVs:
+        cv2.line(image, tuple(tri[0]), tuple(tri[1]), color, 1)
+        cv2.line(image, tuple(tri[1]), tuple(tri[2]), color, 1)
+        cv2.line(image, tuple(tri[2]), tuple(tri[0]), color, 1)
+
 
 def drawBoxes(bvh):
     vertices = bvh.data['vertices']
