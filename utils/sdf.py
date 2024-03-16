@@ -19,7 +19,7 @@ def calculateSDF(bvh, node = None):
     boxMax = node.boundingData[3:]
     # layerMin = int(boxMin[2]) + 50
     layerMin = int(boxMin[2])
-    # layerMax = int(boxMin[2]) + 55
+    # layerMax = int(boxMin[2]) + 52
     layerMax = int(boxMax[2])
     center = (boxMin + boxMax) / 2
 
@@ -64,10 +64,12 @@ def calculateSDF(bvh, node = None):
     triVertices = bvh.data['vertices'][indices]
     uvStack = calUV(point, triVertices, triUVs)
 
-    uStack = 255 * uvStack[:, :, :, 0]
-    vStack = 255 * uvStack[:, :, :, 1]
+    # uStack = 255 * uvStack[:, :, :, 0]
+    # vStack = 255 * uvStack[:, :, :, 1]
     # uStack = 255 * (uStack - np.min(uStack)) / (np.max(uStack) - np.min(uStack))
     # vStack = 255 * (vStack - np.min(vStack)) / (np.max(vStack) - np.min(vStack))
+    uStack = 255 * (uvStack[:, :, :, 0] - 0.878665) / (0.888363 - 0.878665)
+    vStack = 255 * (uvStack[:, :, :, 1] - 0.505952) / (0.523732 - 0.505952)
 
     # z, x, y -> x, y, z
     nrrdStack = np.transpose(np.array(uStack), (1, 2, 0)).astype(np.uint8)

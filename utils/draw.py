@@ -19,8 +19,10 @@ def drawUV(bvh):
     w, h = 869, 675
     image = np.zeros((h, w, 3), dtype=np.uint8)
 
-    drawUVNode(image, bvh, bvh._roots[0].left, color = (255, 0, 0))
-    drawUVNode(image, bvh, bvh._roots[0].right, color = (0, 255, 0))
+    # drawUVNode(image, bvh, bvh._roots[0].left, color = (255, 0, 0))
+    # drawUVNode(image, bvh, bvh._roots[0].right, color = (0, 255, 0))
+    drawUVNode(image, bvh, bvh._roots[0].left.left.left.left, color = (0, 0, 255))
+    # drawUVNode(image, bvh, bvh._roots[0].left.left.left.right, color = (0, 255, 255))
 
     cv2.imshow('UV', image)
     cv2.waitKey(0)
@@ -34,15 +36,19 @@ def drawUVNode(image, bvh, node, color = (255, 255, 255)):
     triIndices = bvh.data['faces'][offset: offset + count]
     triUVs = bvh.data['uvs'][triIndices[:,:,0] - 1]
 
-    triUVs[:, :, 0] *= w
-    triUVs[:, :, 1] *= h
+    # triUVs = triUVs[triUVs[:,0,1] < 0.6]
+
+    # print(np.max(np.max(triUVs, axis=1), axis=0))
+    # print(np.min(np.min(triUVs, axis=1), axis=0))
+
+    triUVs[:, :, 0] = w * triUVs[:, :, 0]
+    triUVs[:, :, 1] = h * (1 - triUVs[:, :, 1])
     triUVs = triUVs.astype(int)
 
     for tri in triUVs:
         cv2.line(image, tuple(tri[0]), tuple(tri[1]), color, 1)
         cv2.line(image, tuple(tri[1]), tuple(tri[2]), color, 1)
         cv2.line(image, tuple(tri[2]), tuple(tri[0]), color, 1)
-
 
 def drawBoxes(bvh):
     vertices = bvh.data['vertices']
