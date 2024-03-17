@@ -35,17 +35,5 @@ if __name__ == "__main__":
     # drawLabels(bvh, indices, node)
     # drawBoxes(bvh)
 
-    # image = cv2.imread('model/SPOILER_20230702185753.png')
-    # h, w = image.shape[:2]
-
-    # x1, x2, y1, y2 = int(w * 0.878665), int(w * 0.888363), int(h * (1 - 0.523732)), int(h * (1 - 0.505952))
-    # cropped_image = image[y1:y2, x1:x2]
-
-    # cv2.imshow('Cropped Image', cropped_image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
-    # cv2.imwrite('inklabels.png', cropped_image)
-
 
 

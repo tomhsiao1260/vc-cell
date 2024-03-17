@@ -1,4 +1,5 @@
 import os
+import cv2
 import nrrd
 import shutil
 import tifffile
@@ -58,60 +59,34 @@ def calculateSDF(bvh, node = None):
     indices = np.array(indexStack)
     point = np.array(pointStack)
     indices = bvh.data['faces'][indices][:, :, :, :, 0] - 1
-    # indices = bvh.data['faces'][indices][:, :, :, 0, 0] - 1
 
     triUVs = bvh.data['uvs'][indices]
     triVertices = bvh.data['vertices'][indices]
-    uvStack = calUV(point, triVertices, triUVs)
+    uvStack = calculateUV(point, triVertices, triUVs)
 
-    # uStack = 255 * uvStack[:, :, :, 0]
-    # vStack = 255 * uvStack[:, :, :, 1]
-    # uStack = 255 * (uStack - np.min(uStack)) / (np.max(uStack) - np.min(uStack))
-    # vStack = 255 * (vStack - np.min(vStack)) / (np.max(vStack) - np.min(vStack))
-    uStack = 255 * (uvStack[:, :, :, 0] - 0.878665) / (0.888363 - 0.878665)
-    vStack = 255 * (uvStack[:, :, :, 1] - 0.505952) / (0.523732 - 0.505952)
+    image = cv2.imread('model/SPOILER_20230702185753.png')
+    h, w = image.shape[:2]
+
+    inklabelStack = image[((1-uvStack[:, :, :, 1]) * h).astype(int), (uvStack[:, :, :, 0] * w).astype(int)][:,:,:,0]
 
     # z, x, y -> x, y, z
-    nrrdStack = np.transpose(np.array(uStack), (1, 2, 0)).astype(np.uint8)
-    nrrd.write('model/u.nrrd', nrrdStack)
+    nrrdStack = np.transpose(np.array(inklabelStack), (1, 2, 0)).astype(np.uint8)
+    nrrd.write('model/inklabels.nrrd', nrrdStack)
     # z, x, y -> z, y, x
-    imageStack = np.transpose(np.array(uStack), (0, 2, 1)).astype(np.uint8)
-    tifffile.imwrite('model/u.png', imageStack)
+    imageStack = np.transpose(np.array(inklabelStack), (0, 2, 1)).astype(np.uint8)
+    tifffile.imwrite('model/inklabels.png', imageStack)
 
     # Copy the generated files to the client folder
-    shutil.copy('model/u.nrrd' , 'client/public')
+    shutil.copy('model/inklabels.nrrd' , 'client/public')
 
-    # z, x, y -> x, y, z
-    nrrdStack = np.transpose(np.array(vStack), (1, 2, 0)).astype(np.uint8)
-    nrrd.write('model/v.nrrd', nrrdStack)
-    # z, x, y -> z, y, x
-    imageStack = np.transpose(np.array(vStack), (0, 2, 1)).astype(np.uint8)
-    tifffile.imwrite('model/v.png', imageStack)
-
-    # Copy the generated files to the client folder
-    shutil.copy('model/v.nrrd' , 'client/public')
-
-# Bilinear Interpolation
-def calUV(point, triVertices, triUVs):
-
-    # triV = triVertices - triVertices[:, :, :, 0, np.newaxis]
-    # p = point - triVertices[:, :, :, 0]
-    # l = np.linalg.norm(triV, axis=-1) + 1e-5
-
-    # r = np.einsum('ijklm, ijkm -> ijkl', triV, p)
-    # r /= l * l
-
-    # uvStack = (2 - r[:, :, :, 1, np.newaxis] - r[:, :, :, 2, np.newaxis]) * triUVs[:, :, :, 0] / 2
-    # uvStack += r[:, :, :, 1, np.newaxis] * triUVs[:, :, :, 1] / 2
-    # uvStack += r[:, :, :, 2, np.newaxis] * triUVs[:, :, :, 2] / 2
-
+# UV Interpolation
+def calculateUV(point, triVertices, triUVs):
     d = np.linalg.norm(triVertices - point[:, :, :, np.newaxis, :], axis=-1)
     d += 1e-5
     d = 1 / d
     d = d / np.sum(d, axis=-1)[:, :, :, np.newaxis]
 
     uvStack = np.sum(triUVs * d[..., np.newaxis], axis=-2)
-
     # uvStack = triUVs[:, :, :, 0]
     
     return uvStack
