@@ -64,10 +64,13 @@ def calculateSDF(bvh, node = None):
     triVertices = bvh.data['vertices'][indices]
     uvStack = calculateUV(point, triVertices, triUVs)
 
+    # extract inklabel from 2d uv to 3d stack
     image = cv2.imread('model/SPOILER_20230702185753.png')
-    h, w = image.shape[:2]
-
-    inklabelStack = image[((1-uvStack[:, :, :, 1]) * h).astype(int), (uvStack[:, :, :, 0] * w).astype(int)][:,:,:,0]
+    wPixel = uvStack[:, :, :, 0]
+    hPixel = 1 - uvStack[:, :, :, 1]
+    hPixel = (image.shape[0] * hPixel).astype(int)
+    wPixel = (image.shape[1] * wPixel).astype(int)
+    inklabelStack = image[hPixel, wPixel][:,:,:,0]
 
     # z, x, y -> x, y, z
     nrrdStack = np.transpose(np.array(inklabelStack), (1, 2, 0)).astype(np.uint8)
@@ -88,5 +91,5 @@ def calculateUV(point, triVertices, triUVs):
 
     uvStack = np.sum(triUVs * d[..., np.newaxis], axis=-2)
     # uvStack = triUVs[:, :, :, 0]
-    
+
     return uvStack

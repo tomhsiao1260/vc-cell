@@ -26,7 +26,7 @@ class MeshBVH:
         lowerBound = triangles[:,0,2] > (layer - gap)
         upperBound = triangles[:,0,2] < (layer + gap)
         mask = np.logical_and(lowerBound, upperBound)
-        index = np.nonzero(mask)[0]
+        index = np.nonzero(mask)[0] + offset
         triangles = triangles[mask]
         tri = Triangle(triangles)
 
