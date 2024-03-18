@@ -24,3 +24,27 @@ def cut_obj(data, splitAxis, splitOffset, survive):
     if (survive == 'right'): data['faces'] = data['faces'][tri_lower_num < 2]
 
     return data
+
+# cut a given obj along z-axis
+def cutLayer(data, layerMin, layerMax):
+    # cut z
+    cut_obj(data, splitAxis = 2, splitOffset = layerMin, survive = 'right')
+    cut_obj(data, splitAxis = 2, splitOffset = layerMax, survive = 'left')
+
+    re_index(data)
+    return data
+
+# cut a given obj via a bounding box
+def cutBounding(data, boxMin, boxMax):
+    # cut x
+    cut_obj(data, splitAxis = 0, splitOffset = boxMin[0], survive = 'right')
+    cut_obj(data, splitAxis = 0, splitOffset = boxMax[0], survive = 'left')
+    # cut y
+    cut_obj(data, splitAxis = 1, splitOffset = boxMin[1], survive = 'right')
+    cut_obj(data, splitAxis = 1, splitOffset = boxMax[1], survive = 'left')
+    # cut z
+    cut_obj(data, splitAxis = 2, splitOffset = boxMin[2], survive = 'right')
+    cut_obj(data, splitAxis = 2, splitOffset = boxMax[2], survive = 'left')
+
+    re_index(data)
+    return data

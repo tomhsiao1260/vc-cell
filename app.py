@@ -1,56 +1,60 @@
 import os
 import numpy as np
 from core.MeshBVH import MeshBVH
-from core.utils.cut import cut_obj, re_index
+from core.utils.cut import cutLayer, cutBounding
 from core.utils.loader import parse_obj, save_obj
-from utils.sdf import calculateSDF
+from utils.sdf import calculateSDF, calSDF
 from utils.draw import drawImage, drawUV, drawBoxes
 from utils.volume import calculateVolume
 
-def cutLayer(segmentID, layerMin, layerMax):
-    path = f'../full-scrolls/Scroll1.volpkg/paths/{segmentID}/{segmentID}.obj'
-    data = parse_obj(path)
-
-    # cut z
-    cut_obj(data, splitAxis = 2, splitOffset = layerMin, survive = 'right')
-    cut_obj(data, splitAxis = 2, splitOffset = layerMax, survive = 'left')
-
-    re_index(data)
-    save_obj(os.path.join('model', f'{segmentID}.obj'), data, mtl = segmentID)
-
-def cutBounding(path, boundingData):
-    data = parse_obj(path)
-    boxMin = boundingData[:3]
-    boxMax = boundingData[3:]
-
-    # cut x
-    cut_obj(data, splitAxis = 0, splitOffset = boxMin[0], survive = 'right')
-    cut_obj(data, splitAxis = 0, splitOffset = boxMax[0], survive = 'left')
-    # cut y
-    cut_obj(data, splitAxis = 1, splitOffset = boxMin[1], survive = 'right')
-    cut_obj(data, splitAxis = 1, splitOffset = boxMax[1], survive = 'left')
-    # cut z
-    cut_obj(data, splitAxis = 2, splitOffset = boxMin[2], survive = 'right')
-    cut_obj(data, splitAxis = 2, splitOffset = boxMax[2], survive = 'left')
-
-    re_index(data)
-
-    segmentID = '20230702185753'
-    save_obj(os.path.join('model', 'ok.obj'), data, mtl = segmentID)
+import nrrd
+import tifffile
+import shutil
 
 if __name__ == "__main__":
-    cutLayer(segmentID = '20230702185753', layerMin = 950, layerMax = 1050)
+    segmentID = '20230702185753'
+    segmentPath = f'../full-scrolls/Scroll1.volpkg/paths/{segmentID}/{segmentID}.obj'
+    segmentLayerPath = os.path.join('model', f'{segmentID}.obj')
+    segmentBoundingPath = os.path.join('model', f'{segmentID}_bounding.obj')
 
-    # path = os.path.join('model', 'plane.obj')
-    # path = os.path.join('model', '20230702185753.obj')
+    # # cut a given segment along z-axis
+    # data = parse_obj(segmentPath)
+    # cutLayer(data, layerMin = 950, layerMax = 1050)
+    # save_obj(segmentLayerPath, data, mtl = segmentID)
 
-    # data = parse_obj(path)
+    # # cut a given segment via a bounding box
+    # data = parse_obj(os.path.join('model', f'{segmentID}.obj'))
+    # boxMin = np.array([ 3223, 2241, 935])
+    # boxMax = np.array([ 3410, 2390, 1061 ])
+    # cutBounding(data, boxMin, boxMax)
+    # save_obj(segmentBoundingPath, data, mtl = segmentID)
+
+    data = parse_obj(segmentBoundingPath)
+    dStack, inklabelStack = calSDF(data)
+    dStack *= 255
+    inklabelStack *= 255
+
+    # z, x, y -> x, y, z
+    nrrdStack = np.transpose(dStack, (1, 2, 0)).astype(np.uint8)
+    nrrd.write('model/sdf.nrrd', nrrdStack)
+    # z, x, y -> z, y, x
+    imageStack = np.transpose(dStack, (0, 2, 1)).astype(np.uint8)
+    tifffile.imwrite('model/sdf.png', imageStack)
+    # Copy the generated files to the client folder
+    shutil.copy('model/sdf.nrrd' , 'client/public')
+
+    # z, x, y -> x, y, z
+    nrrdStack = np.transpose(inklabelStack, (1, 2, 0)).astype(np.uint8)
+    nrrd.write('model/inklabels.nrrd', nrrdStack)
+    # z, x, y -> z, y, x
+    imageStack = np.transpose(inklabelStack, (0, 2, 1)).astype(np.uint8)
+    tifffile.imwrite('model/inklabels.png', imageStack)
+    # Copy the generated files to the client folder
+    shutil.copy('model/inklabels.nrrd' , 'client/public')
+
     # bvh = MeshBVH(data)
-
     # node = bvh._roots[0].left.left.left.left
-    # boundingData = np.array([ 3223.82, 2241.01, 935.42, 3410.5, 2390.79, 1061.63 ])
 
-    # cutBounding(path, boundingData)
     # calculateSDF(bvh, node)
     # calculateVolume(node.boundingData)
 
