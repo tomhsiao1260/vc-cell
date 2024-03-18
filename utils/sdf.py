@@ -8,11 +8,8 @@ def calculateSDF(data):
     boxMin = np.min(data['vertices'], axis=0)
     boxMax = np.max(data['vertices'], axis=0)
 
-    # layerMin = int(boxMin[2]) + 50
-    # layerMax = int(boxMin[2]) + 52
     layerMin = int(boxMin[2])
     layerMax = int(boxMax[2])
-
     center = (boxMin + boxMax) / 2
     sampling = (1.0 * (boxMax - boxMin)).astype('int')
     windowSize = 1.0 * (boxMax - boxMin)
@@ -24,6 +21,7 @@ def calculateSDF(data):
 
     i, j = np.meshgrid(np.arange(sampling[0]), np.arange(sampling[1]), indexing='ij')
 
+    # for layer in tqdm(range(layerMin + 50, layerMin + 52, 1)):
     for layer in tqdm(range(layerMin, layerMax, 1)):
         x = center[0] - windowSize[0] / 2 + (i + 0.5) * windowSize[0] / sampling[0]
         y = center[1] - windowSize[1] / 2 + (j + 0.5) * windowSize[1] / sampling[1]

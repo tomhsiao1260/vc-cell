@@ -1,15 +1,11 @@
 import os
-import nrrd
-import shutil
 import tifffile
 import numpy as np
 
-def calculateVolume(boundingData):
-    boxMin = boundingData[:3]
-    boxMax = boundingData[3:]
+def calculateVolume(boxMin, boxMax, volumeGridPath):
     lower = (boxMin // 500 + 1).astype('int')
     upper = (boxMax // 500 + 1).astype('int')
-    
+
     xStack = []
     for x in range(lower[0], upper[0] + 1):
         yStack = []
@@ -22,7 +18,7 @@ def calculateVolume(boundingData):
                 end = np.maximum(np.minimum(end, 500), 0).astype('int')
 
                 name = 'cell_yxz_{:03d}_{:03d}_{:03d}.tif'.format(y, x, z)
-                path = os.path.join('../full-scrolls/Scroll1.volpkg/volume_grids/20230205180739', name)
+                path = os.path.join(volumeGridPath, name)
                 # z, y, x
                 data = tifffile.imread(path)
                 data = data[start[2]:end[2], start[1]:end[1], start[0]:end[0]]
@@ -31,13 +27,7 @@ def calculateVolume(boundingData):
             yStack.append(np.concatenate(zStack, axis=0))
         xStack.append(np.concatenate(yStack, axis=1))
 
-    volume = np.concatenate(xStack, axis=2)
-    volume = (volume / np.max(volume)) * 255
-    # z, y, x -> x, y, z
-    nrrdStack = np.transpose(volume, (2, 1, 0)).astype(np.uint8)
-    nrrd.write('model/volume.nrrd', nrrdStack)
-    # z, y, x -> z, y, x
-    imageStack = np.transpose(volume, (0, 1, 2)).astype(np.uint8)
-    tifffile.imwrite('model/volume.png', imageStack)
+    volumeStack = np.concatenate(xStack, axis=2)
+    volumeStack = volumeStack / np.max(volumeStack)
 
-    shutil.copy('model/volume.nrrd' , 'client/public')
+    return volumeStack
