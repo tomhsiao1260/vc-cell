@@ -31,7 +31,7 @@ def parse_obj(filename):
 
     return data
 
-def save_obj(filename, data, materialName = None):
+def save_obj(filename, data, mtl = None):
     vertices = data.get('vertices', np.array([]))
     normals  = data.get('normals' , np.array([]))
     uvs      = data.get('uvs'     , np.array([]))
@@ -39,9 +39,9 @@ def save_obj(filename, data, materialName = None):
     colors   = data.get('colors'  , np.array([]))
 
     with open(filename, 'w') as f:
-        if (materialName is not None):
+        if (mtl is not None):
             f.write(f"# Texture information\n")
-            f.write(f"mtllib {materialName}.mtl\n")
+            f.write(f"mtllib {mtl}.mtl\n")
             f.write(f"usemtl default\n")
 
         f.write(f"# Vertices: {len(vertices)}\n")
