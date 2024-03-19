@@ -99,8 +99,8 @@ if __name__ == "__main__":
 
     # boxMin = node.boundingData[:3]
     # boxMax = node.boundingData[3:]
-    # # boxMin = np.array([ 3223, 2241, 935 ])
-    # # boxMax = np.array([ 3410, 2390, 1061 ])
+    # boxMin = np.array([ 3223, 2241, 935 ])
+    # boxMax = np.array([ 3410, 2390, 1061 ])
 
     # cutBounding(data, boxMin, boxMax)
     # save_obj(segmentBoundingPath, data, mtl = segmentID)

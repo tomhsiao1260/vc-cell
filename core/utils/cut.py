@@ -19,7 +19,23 @@ def cut_obj(data, splitAxis, splitOffset, survive):
     triVertices = data['vertices'][data['faces'][:,:,0] - 1]
 
     # number of vertices of each triangle located in the lower side (0~3)
-    tri_lower_num = np.sum(triVertices[:, :, splitAxis] < splitOffset, axis=1)
+    tri_lower_bool = triVertices[:, :, splitAxis] < splitOffset
+    tri_lower_num = np.sum(tri_lower_bool, axis=1)
+
+    # straighten the cutting edge (tweak the edge vertices position)
+    f = data['faces'][tri_lower_num == 1]
+    v = data['vertices'][f[:,:,0] - 1]
+    mask = v[:, :, splitAxis] < splitOffset
+    i = np.unique(f[:, :, 0][mask] - 1)
+    data['vertices'][i, splitAxis] = splitOffset
+
+    f = data['faces'][tri_lower_num == 2]
+    v = data['vertices'][f[:,:,0] - 1]
+    mask = v[:, :, splitAxis] > splitOffset
+    i = np.unique(f[:, :, 0][mask] - 1)
+    data['vertices'][i, splitAxis] = splitOffset
+
+    # choose the side we need
     if (survive == 'left'):  data['faces'] = data['faces'][tri_lower_num >= 2]
     if (survive == 'right'): data['faces'] = data['faces'][tri_lower_num < 2]
 
