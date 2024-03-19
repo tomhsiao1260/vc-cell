@@ -6,7 +6,6 @@ export class VolumeMaterial extends ShaderMaterial {
       defines: {
         // The maximum distance through our rendering volume is sqrt(3).
         MAX_STEPS: 887, // 887 for 512^3, 1774 for 1024^3
-        REFINEMENT_STEPS: 4,
         SURFACE_EPSILON: 0.001,
       },
 
@@ -21,6 +20,9 @@ export class VolumeMaterial extends ShaderMaterial {
         sdfTransformInverse: { value: new Matrix4() },
         segmentMode: { value: true },
         surface: { value: 0 },
+        label: { value: 0 },
+        tlabel: { value: 0 },
+        color: { value: true },
       },
 
       vertexShader: /* glsl */ `
@@ -35,7 +37,10 @@ export class VolumeMaterial extends ShaderMaterial {
       fragmentShader: /* glsl */ `
         precision highp sampler3D;
 
+        uniform float tlabel;
+        uniform float label;
         uniform float surface;
+        uniform bool color;
         uniform bool segmentMode;
 
         varying vec2 vUv;
@@ -55,10 +60,8 @@ export class VolumeMaterial extends ShaderMaterial {
         const vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
         const float shininess = 40.0;
 
-        void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
-        void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
+        vec4 cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
 
-        float sample1(vec3 texcoords);
         vec4 apply_colormap(float val);
         vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
 
@@ -78,7 +81,7 @@ export class VolumeMaterial extends ShaderMaterial {
         void main() {
           float fragCoordZ = -1.;
 
-          // float v = texture(volumeTex, vec3( vUv, 0.5 )).r;
+          // float v = texture(volumeTex, vec3( vUv, 0.0 )).r;
           // gl_FragColor = vec4(v, v, v, 1.0); return;
 
           // get the inverse of the sdf box transform
@@ -105,10 +108,12 @@ export class VolumeMaterial extends ShaderMaterial {
             if ( nsteps < 1 ) discard;
 
             bool intersectsSurface = false;
+            bool intersectsSurfaceLabel = false;
             vec4 boxNearPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + 1e-5 ), 1.0 );
             vec4 boxFarPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + distInsideBox - 1e-5 ), 1.0 );
             vec4 nearPoint = sdfTransform * boxNearPoint;
             vec4 farPoint = sdfTransform * boxFarPoint;
+            vec4 nearPointLabel = sdfTransform * boxNearPoint;
 
             // For testing: show the number of steps. This helps to establish whether the rays are correctly oriented
             // gl_FragColor = vec4(0.0, float(nsteps) / size.x, 1.0, 1.0);
@@ -156,6 +161,23 @@ export class VolumeMaterial extends ShaderMaterial {
               intersectsSurface = true;
             }
 
+            if (segmentMode) {
+              // near -> surface
+              for ( int i = 0; i < MAX_STEPS; i ++ ) {
+                vec3 uv = ( sdfTransformInverse * nearPointLabel ).xyz + vec3( 0.5 );
+                float distanceToSurface = texture( sdfTex, uv ).r - tlabel;
+                if ( distanceToSurface < SURFACE_EPSILON ) {
+                  intersectsSurfaceLabel = true;
+                  break;
+                }
+                if ( uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || uv.z < 0.0 || uv.z > 1.0 ) {
+                  break;
+                }
+                // step the ray
+                nearPointLabel.xyz += rayDirection * abs( distanceToSurface );
+              }
+            }
+
             // volume rendering
             if ( intersectsSurface ) {
               float thickness = length((sdfTransformInverse * (farPoint - nearPoint)).xyz);
@@ -167,11 +189,31 @@ export class VolumeMaterial extends ShaderMaterial {
 
               vec3 step = sdfRayDirection * thickness / float(nsteps);
               vec3 uv = (sdfTransformInverse * nearPoint).xyz + vec3( 0.5 );
+              vec3 uvLabel = (sdfTransformInverse * nearPointLabel).xyz + vec3( 0.5 );
 
-
-              float ink = texture(labelTex, uv).r;
-              gl_FragColor = vec4(ink, ink, ink, 1.0);
-              // cast_mip(uv, step, nsteps, sdfRayDirection);
+              if (color) {
+                vec4 volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
+                if (intersectsSurfaceLabel) {
+                  float ink = texture(labelTex, uvLabel).r;
+                  vec4 labelColor = vec4(ink, ink, ink, 1.0);
+                  gl_FragColor = label * labelColor + (1.0 - label) * volumeColor;
+                  return;
+                }
+                gl_FragColor = volumeColor;
+                return;
+              } else {
+                float val = texture(volumeTex, uv).r;
+                vec4 volumeColor = vec4(val, val, val, 1.0);
+                float d = texture(sdfTex, uv).r;
+                if (d < tlabel) {
+                  float ink = texture(labelTex, uv).r;
+                  vec4 labelColor = vec4(ink, ink, ink, 1.0);
+                  gl_FragColor = label * labelColor + (1.0 - label) * volumeColor;
+                  return;
+                }
+                gl_FragColor = volumeColor;
+                return;
+              }
               return;
             }
 
@@ -180,21 +222,19 @@ export class VolumeMaterial extends ShaderMaterial {
           }
         }
 
-        float sample1(vec3 texcoords) {
-          /* Sample float value from a 3D texture. Assumes intensity data. */
-          return texture(volumeTex, texcoords.xyz).r;
-        }
-
         vec4 apply_colormap(float val) {
-          val = (val - clim[0]) / (clim[1] - clim[0]);
+          float v = (val - clim[0]) / (clim[1] - clim[0]);
+          return texture2D(cmdata, vec2(v, 0.5));
           // return vec4(vec3(val), 1.0);
-          return texture2D(cmdata, vec2(val, 0.5));
         }
 
-        void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
+        vec4 cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
           float max_val = -1e6;
           int max_i = 100;
           vec3 loc = start_loc;
+
+          // float val = texture(volumeTex, start_loc).r;
+          // gl_FragColor = apply_colormap(val); return;
 
           // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
           // non-constant expression. So we use a hard-coded max, and an additional condition
@@ -203,7 +243,8 @@ export class VolumeMaterial extends ShaderMaterial {
             if (iter >= nsteps)
               break;
             // Sample from the 3D texture
-            float val = sample1(loc);
+            float val = texture(volumeTex, loc).r;
+            float val_d = texture(sdfTex, loc).r;
             // Apply MIP operation
             if (val > max_val) {
               max_val = val;
@@ -213,16 +254,9 @@ export class VolumeMaterial extends ShaderMaterial {
             loc += step;
           }
 
-          // Refine location, gives crispier images
-          vec3 iloc = start_loc + step * (float(max_i) - 0.5);
-          vec3 istep = step / float(REFINEMENT_STEPS);
-          for (int i=0; i<REFINEMENT_STEPS; i++) {
-            max_val = max(max_val, sample1(iloc));
-            iloc += istep;
-          }
-
           // Resolve final color
-          gl_FragColor = apply_colormap(max_val);
+          vec4 volumeColor = apply_colormap(max_val);
+          return volumeColor;
         }
       `,
     })

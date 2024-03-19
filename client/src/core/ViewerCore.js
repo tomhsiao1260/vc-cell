@@ -19,7 +19,10 @@ export default class ViewerCore {
     this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis) }
 
     this.params = {}
-    this.params.surface = 0.05
+    this.params.color = true
+    this.params.surface = 0.8
+    this.params.label = 0
+    this.params.tlabel = 0.08
 
     this.init()
   }
@@ -79,8 +82,8 @@ export default class ViewerCore {
     const volumeTex = new THREE.Data3DTexture(volume.data, w, h, d)
     volumeTex.format = THREE.RedFormat
     volumeTex.type = THREE.UnsignedByteType
-    volumeTex.minFilter = THREE.LinearFilter
-    volumeTex.magFilter = THREE.LinearFilter
+    volumeTex.minFilter = THREE.NearestFilter
+    volumeTex.magFilter = THREE.NearestFilter
     volumeTex.needsUpdate = true
 
     const sdfTex = new THREE.Data3DTexture(sdf.data, sw, sh, sd)
@@ -93,8 +96,8 @@ export default class ViewerCore {
     const labelTex = new THREE.Data3DTexture(label.data, lw, lh, ld)
     labelTex.format = THREE.RedFormat
     labelTex.type = THREE.UnsignedByteType
-    labelTex.minFilter = THREE.LinearFilter
-    labelTex.magFilter = THREE.LinearFilter
+    labelTex.minFilter = THREE.NearestFilter
+    labelTex.magFilter = THREE.NearestFilter
     labelTex.needsUpdate = true
 
     this.volumePass.material.uniforms.labelTex.value = labelTex
@@ -111,7 +114,10 @@ export default class ViewerCore {
 
     // this.renderer.render(this.scene, this.camera)
 
+    this.volumePass.material.uniforms.color.value = this.params.color
     this.volumePass.material.uniforms.surface.value = this.params.surface
+    this.volumePass.material.uniforms.label.value = this.params.label
+    this.volumePass.material.uniforms.tlabel.value = this.params.tlabel
 
     this.camera.updateMatrixWorld()
     this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)

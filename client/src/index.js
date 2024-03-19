@@ -29,5 +29,8 @@ let gui
 function updateGUI(viewer) {
   if (gui) gui.destroy()
   gui = new GUI()
+  gui.add(viewer.params, 'label', 0, 1).onChange(viewer.render)
+  gui.add(viewer.params, 'tlabel', 0.001, 0.1).onChange(viewer.render)
   gui.add(viewer.params, 'surface', 0.001, 0.8).onChange(viewer.render)
+  gui.add(viewer.params, 'color', true).onChange(viewer.render)
 }
