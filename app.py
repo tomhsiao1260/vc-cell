@@ -9,7 +9,7 @@ from core.utils.cut import cutLayer, cutBounding
 from core.utils.loader import parse_obj, save_obj
 from utils.volume import calculateVolume
 from utils.sdf import calculateSDF, calculateUV, calculateLabel
-from utils.draw import drawImage, drawUV, drawBoxes
+from utils.draw import drawImage, drawUV, drawBoxes, drawUVs
 
 #####################################################
 ######## Extract volume in the bounding box #########
@@ -86,6 +86,14 @@ if __name__ == "__main__":
     # cutLayer(data, layerMin = 950, layerMax = 1050)
     # save_obj(segmentLayerPath, data, mtl = segmentID)
 
+    # uv = np.array([0.5, 0.5])
+    # d = np.sum((data['uvs'] - uv) ** 2, axis=1)
+    # index = np.argmin(d)
+
+    # center = data['vertices'][index]
+    # boxMin = center - np.array([50, 50, 50])
+    # boxMax = center + np.array([50, 50, 50])
+
     #####################################################
     ###### Cut a given segment via a bounding box #######
     #####################################################
@@ -109,13 +117,15 @@ if __name__ == "__main__":
     # volumeGridPath = '../full-scrolls/Scroll1.volpkg/volume_grids/20230205180739'
     # getVolume(boxMin, boxMax, volumeGridPath)
 
-    # extract sdf
+    # # extract sdf
     data = parse_obj(segmentBoundingPath)
-    pStack, iStack, dStack = getSDF(data)
+    # pStack, iStack, dStack = getSDF(data)
 
-    # extract inklabels
-    inklabelPath = 'model/SPOILER_20230702185753.png'
-    getLabel(data, pStack, iStack, inklabelPath)
+    # # extract inklabels
+    # inklabelPath = 'model/SPOILER_20230702185753.png'
+    # getLabel(data, pStack, iStack, inklabelPath)
+
+    drawUVs(data)
 
 
 

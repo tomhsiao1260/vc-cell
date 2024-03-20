@@ -28,6 +28,27 @@ def drawUV(bvh):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def drawUVs(data):
+    w, h = 869, 675
+    color = (255, 255, 255)
+    image = np.zeros((h, w, 3), dtype=np.uint8)
+
+    triIndices = data['faces']
+    triUVs = data['uvs'][triIndices[:,:,0] - 1]
+
+    triUVs[:, :, 0] = w * triUVs[:, :, 0]
+    triUVs[:, :, 1] = h * (1 - triUVs[:, :, 1])
+    triUVs = triUVs.astype(int)
+
+    for tri in triUVs:
+        cv2.line(image, tuple(tri[0]), tuple(tri[1]), color, 1)
+        cv2.line(image, tuple(tri[1]), tuple(tri[2]), color, 1)
+        cv2.line(image, tuple(tri[2]), tuple(tri[0]), color, 1)
+
+    cv2.imshow('UV', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 def drawUVNode(image, bvh, node, color = (255, 255, 255)):
     h, w, _ = image.shape
     offset = node._offset
