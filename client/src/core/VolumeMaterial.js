@@ -116,10 +116,30 @@ export class VolumeMaterial extends ShaderMaterial {
             vec4 nearPoint = sdfTransform * boxNearPoint;
             vec4 farPoint = sdfTransform * boxFarPoint;
             vec4 nearPointLabel = sdfTransform * boxNearPoint;
+            vec4 nearBoxPoint = sdfTransform * boxNearPoint;
 
             // For testing: show the number of steps. This helps to establish whether the rays are correctly oriented
             // gl_FragColor = vec4(0.0, float(nsteps) / size.x, 1.0, 1.0);
             // return;
+
+            float gap = -0.001;
+            vec3 c = slice;
+            vec2 boxInfoZ = rayBoxDist( vec3(-0.5, -0.5, c.z - gap), vec3(0.5, 0.5, c.z + gap), (sdfTransformInverse * nearBoxPoint).xyz, sdfRayDirection );
+            vec2 boxInfoY = rayBoxDist( vec3(-0.5, c.y - gap, -0.5), vec3(0.5, c.y + gap, 0.5), (sdfTransformInverse * nearBoxPoint).xyz, sdfRayDirection );
+            vec2 boxInfoX = rayBoxDist( vec3(c.x - gap, -0.5, -0.5), vec3(c.x + gap, 0.5, 0.5), (sdfTransformInverse * nearBoxPoint).xyz, sdfRayDirection );
+
+            float t = 1e5;
+            if (boxInfoZ.y > 0.0) { t = boxInfoZ.x; }
+            if (boxInfoY.y > 0.0 && t > boxInfoY.x) { t = boxInfoY.x; }
+            if (boxInfoX.y > 0.0 && t > boxInfoX.x) { t = boxInfoX.x; }
+
+            vec4 boxNearP = vec4( (sdfTransformInverse * nearBoxPoint).xyz + sdfRayDirection * ( t + 1e-5 ), 1.0 );
+
+            if (t < 1e5) {
+              vec3 uvt = boxNearP.xyz + vec3( 0.5 );
+              float v = texture(volumeTex, uvt).r;
+              gl_FragColor = vec4(v, v, v, 1.0);
+            }
 
             // SDF ray march (near & far)
             if (segmentMode) {
@@ -142,6 +162,10 @@ export class VolumeMaterial extends ShaderMaterial {
               }
 
               if (intersectsSurface) {
+                vec3 p1 = (sdfTransform * boxNearP).xyz;
+                vec3 p2 = nearPoint.xyz;
+                if (t < 1e5 && length(p1 - rayOrigin) < length(p2 - rayOrigin)) return;
+
                 // far -> surface
                 for ( int i = 0; i < MAX_STEPS; i ++ ) {
                   // sdf box extends from - 0.5 to 0.5
@@ -192,27 +216,6 @@ export class VolumeMaterial extends ShaderMaterial {
               vec3 step = sdfRayDirection * thickness / float(nsteps);
               vec3 uv = (sdfTransformInverse * nearPoint).xyz + vec3( 0.5 );
               vec3 uvLabel = (sdfTransformInverse * nearPointLabel).xyz + vec3( 0.5 );
-
-              float gap = -0.001;
-              vec3 c = slice;
-              vec2 boxInfoZ = rayBoxDist( vec3(-0.5, -0.5, c.z - gap), vec3(0.5, 0.5, c.z + gap), (sdfTransformInverse * nearPoint).xyz, sdfRayDirection );
-              vec2 boxInfoY = rayBoxDist( vec3(-0.5, c.y - gap, -0.5), vec3(0.5, c.y + gap, 0.5), (sdfTransformInverse * nearPoint).xyz, sdfRayDirection );
-              vec2 boxInfoX = rayBoxDist( vec3(c.x - gap, -0.5, -0.5), vec3(c.x + gap, 0.5, 0.5), (sdfTransformInverse * nearPoint).xyz, sdfRayDirection );
-
-              float t = 1e5;
-              if (boxInfoZ.y > 0.0) { t = boxInfoZ.x; }
-              if (boxInfoY.y > 0.0 && t > boxInfoY.x) { t = boxInfoY.x; }
-              if (boxInfoX.y > 0.0 && t > boxInfoX.x) { t = boxInfoX.x; }
-
-              if (t < 1e5) {
-                vec4 boxNearPoint = vec4( (sdfTransformInverse * nearPoint).xyz + sdfRayDirection * ( t + 1e-5 ), 1.0 );
-
-                vec3 uvt = boxNearPoint.xyz + vec3( 0.5 );
-                float v = texture(volumeTex, uvt).r;
-                gl_FragColor = vec4(v, v, v, 1.0);
-              }
-
-              return;
 
               if (color) {
                 vec4 volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
