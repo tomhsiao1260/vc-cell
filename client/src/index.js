@@ -33,4 +33,7 @@ function updateGUI(viewer) {
   gui.add(viewer.params, 'tlabel', 0.001, 0.1).onChange(viewer.render)
   gui.add(viewer.params, 'surface', 0.001, 0.8).onChange(viewer.render)
   gui.add(viewer.params, 'color', true).onChange(viewer.render)
+  gui.add(viewer.params, 'sliceX', -0.5, 0.5).onChange(viewer.render)
+  gui.add(viewer.params, 'sliceY', -0.5, 0.5).onChange(viewer.render)
+  gui.add(viewer.params, 'sliceZ', -0.5, 0.5).onChange(viewer.render)
 }

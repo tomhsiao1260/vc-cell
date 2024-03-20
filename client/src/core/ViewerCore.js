@@ -23,6 +23,9 @@ export default class ViewerCore {
     this.params.surface = 0.8
     this.params.label = 0
     this.params.tlabel = 0.08
+    this.params.sliceX = 0
+    this.params.sliceY = 0
+    this.params.sliceZ = 0
 
     this.init()
   }
@@ -117,7 +120,9 @@ export default class ViewerCore {
     this.volumePass.material.uniforms.color.value = this.params.color
     this.volumePass.material.uniforms.surface.value = this.params.surface
     this.volumePass.material.uniforms.label.value = this.params.label
-    this.volumePass.material.uniforms.tlabel.value = this.params.tlabel
+    this.volumePass.material.uniforms.slice.value.x = this.params.sliceX
+    this.volumePass.material.uniforms.slice.value.y = this.params.sliceY
+    this.volumePass.material.uniforms.slice.value.z = this.params.sliceZ
 
     this.camera.updateMatrixWorld()
     this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)

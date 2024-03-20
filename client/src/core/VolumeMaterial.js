@@ -23,6 +23,7 @@ export class VolumeMaterial extends ShaderMaterial {
         label: { value: 0 },
         tlabel: { value: 0 },
         color: { value: true },
+        slice: { value: new Vector3() },
       },
 
       vertexShader: /* glsl */ `
@@ -37,6 +38,7 @@ export class VolumeMaterial extends ShaderMaterial {
       fragmentShader: /* glsl */ `
         precision highp sampler3D;
 
+        uniform vec3 slice;
         uniform float tlabel;
         uniform float label;
         uniform float surface;
@@ -190,6 +192,27 @@ export class VolumeMaterial extends ShaderMaterial {
               vec3 step = sdfRayDirection * thickness / float(nsteps);
               vec3 uv = (sdfTransformInverse * nearPoint).xyz + vec3( 0.5 );
               vec3 uvLabel = (sdfTransformInverse * nearPointLabel).xyz + vec3( 0.5 );
+
+              float gap = -0.001;
+              vec3 c = slice;
+              vec2 boxInfoZ = rayBoxDist( vec3(-0.5, -0.5, c.z - gap), vec3(0.5, 0.5, c.z + gap), (sdfTransformInverse * nearPoint).xyz, sdfRayDirection );
+              vec2 boxInfoY = rayBoxDist( vec3(-0.5, c.y - gap, -0.5), vec3(0.5, c.y + gap, 0.5), (sdfTransformInverse * nearPoint).xyz, sdfRayDirection );
+              vec2 boxInfoX = rayBoxDist( vec3(c.x - gap, -0.5, -0.5), vec3(c.x + gap, 0.5, 0.5), (sdfTransformInverse * nearPoint).xyz, sdfRayDirection );
+
+              float t = 1e5;
+              if (boxInfoZ.y > 0.0) { t = boxInfoZ.x; }
+              if (boxInfoY.y > 0.0 && t > boxInfoY.x) { t = boxInfoY.x; }
+              if (boxInfoX.y > 0.0 && t > boxInfoX.x) { t = boxInfoX.x; }
+
+              if (t < 1e5) {
+                vec4 boxNearPoint = vec4( (sdfTransformInverse * nearPoint).xyz + sdfRayDirection * ( t + 1e-5 ), 1.0 );
+
+                vec3 uvt = boxNearPoint.xyz + vec3( 0.5 );
+                float v = texture(volumeTex, uvt).r;
+                gl_FragColor = vec4(v, v, v, 1.0);
+              }
+
+              return;
 
               if (color) {
                 vec4 volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
