@@ -79,6 +79,10 @@ if __name__ == "__main__":
     segmentLayerPath = os.path.join('model', f'{segmentID}.obj')
     segmentBoundingPath = os.path.join('model', f'{segmentID}_bounding.obj')
 
+    # 9056, 6864
+    # 17381, 13513
+    # 9056 / 17381, (13513 - 6864) / 13513
+
     #####################################################
     ########## Cut a given segment along z-axis #########
     #####################################################
@@ -118,14 +122,14 @@ if __name__ == "__main__":
     # getVolume(boxMin, boxMax, volumeGridPath)
 
     # # extract sdf
-    data = parse_obj(segmentBoundingPath)
+    # data = parse_obj(segmentBoundingPath)
     # pStack, iStack, dStack = getSDF(data)
 
     # # extract inklabels
     # inklabelPath = 'model/SPOILER_20230702185753.png'
     # getLabel(data, pStack, iStack, inklabelPath)
 
-    drawUVs(data)
+    # drawUVs(data)
 
 
 
