@@ -1,7 +1,7 @@
 import os
 import tifffile
 import numpy as np
-from path_utils import grid_path
+from path_utils import grid_folder
 
 def getGridName(boxMin, boxMax):
     lower = (boxMin // 500 + 1).astype('int')
@@ -37,7 +37,7 @@ def calculateVolume(boxMin, boxMax):
                 end = np.maximum(np.minimum(end, 500), 0).astype('int')
 
                 name = 'cell_yxz_{:03d}_{:03d}_{:03d}.tif'.format(y, x, z)
-                path = os.path.join(grid_path, name)
+                path = os.path.join(grid_folder, name)
                 # z, y, x
                 data = tifffile.imread(path)
                 data = data[start[2]:end[2], start[1]:end[1], start[0]:end[0]]

@@ -26,10 +26,10 @@ if __name__ == "__main__":
     for grid in nameList: print(grid)
     print('')
     print('Volume Minimum:')
-    print(f'--xmin {boxMin[0]} --ymin {boxMin[1]} --zmin {boxMin[2]}')
+    print(f'--min {boxMin[0]} {boxMin[1]} {boxMin[2]}')
     print('')
     print('Volume Maximum:')
-    print(f'--xmax {boxMax[0]} --ymax {boxMax[1]} --zmax {boxMax[2]}')
+    print(f'--max {boxMax[0]} {boxMax[1]} {boxMax[2]}')
     print('')
 
 

@@ -23,18 +23,14 @@ def getVolume(boxMin, boxMax):
 
     return volumeStack
 
-# python get_volume.py --xmin 4226.67 --ymin 3276.57 --zmin 6652.28 --xmax 4326.67 --ymax 3376.57 --zmax 6752.28
+# python get_volume.py --min 4226.67 3276.57 6652.28 --max 4326.67 3376.57 6752.28
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Generate volume via boudning box')
-    parser.add_argument('--xmin', type=float, help='x value of bounding box minimum')
-    parser.add_argument('--ymin', type=float, help='y value of bounding box minimum')
-    parser.add_argument('--zmin', type=float, help='z value of bounding box minimum')
-    parser.add_argument('--xmax', type=float, help='x value of bounding box maximum')
-    parser.add_argument('--ymax', type=float, help='y value of bounding box maximum')
-    parser.add_argument('--zmax', type=float, help='z value of bounding box maximum')
+    parser.add_argument('--min', nargs=3, type=float, metavar=('X', 'Y', 'Z'), help='x, y, z value of bounding box minimum')
+    parser.add_argument('--max', nargs=3, type=float, metavar=('X', 'Y', 'Z'), help='x, y, z value of bounding box maximum')
     args = parser.parse_args()
 
-    boxMin = np.array([ args.xmin, args.ymin,args.zmin ])
-    boxMax = np.array([ args.xmax, args.ymax,args.zmax ])
+    boxMin = np.array(args.min)
+    boxMax = np.array(args.max)
     getVolume(boxMin, boxMax)
