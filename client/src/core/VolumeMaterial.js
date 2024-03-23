@@ -20,6 +20,8 @@ export class VolumeMaterial extends ShaderMaterial {
         sdfTransformInverse: { value: new Matrix4() },
         segmentVisible: { value: true },
         sliceVisible: { value: true },
+        labelVisible: { value: true },
+        slice: { value: new Vector3() },
       },
 
       vertexShader: /* glsl */ `
@@ -36,10 +38,12 @@ export class VolumeMaterial extends ShaderMaterial {
 
         uniform bool segmentVisible;
         uniform bool sliceVisible;
+        uniform bool labelVisible;
 
         varying vec2 vUv;
         uniform vec2 clim;
         uniform vec3 size;
+        uniform vec3 slice;
         uniform sampler3D labelTex;
         uniform sampler3D sdfTex;
         uniform sampler3D volumeTex;
@@ -57,6 +61,8 @@ export class VolumeMaterial extends ShaderMaterial {
 
         vec4 apply_colormap(float val);
         vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
+
+        void sliceXYZ(out vec3 p, out bool hit, vec3 center, vec3 rayOrigin, vec3 rayDir);
 
         // distance to box bounds
 				vec2 rayBoxDist( vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir ) {
@@ -95,7 +101,33 @@ export class VolumeMaterial extends ShaderMaterial {
 					bool intersectsBox = distInsideBox > 0.0;
 					gl_FragColor = vec4( 0.0 );
 
-          if (!segmentVisible) return;
+          if ( intersectsBox ) {
+            vec3 p; bool sliceHit;
+            sliceXYZ(p, sliceHit, slice, sdfRayOrigin, sdfRayDirection);
+
+            if (sliceVisible && sliceHit) {
+              float v = texture(volumeTex, p.xyz + vec3( 0.5 )).r;
+              gl_FragColor = vec4(v, v, v, 1.0);
+              return;
+            }
+          }
+
+          if (gl_FragColor.a < 0.05){ discard; }
+        }
+
+        void sliceXYZ(out vec3 p, out bool hit, vec3 center, vec3 rayOrigin, vec3 rayDirection) {
+          float gap = -0.001;
+          vec2 boxInfoZ = rayBoxDist( vec3(-0.5, -0.5, center.z - gap), vec3(0.5, 0.5, center.z + gap), rayOrigin, rayDirection );
+          vec2 boxInfoY = rayBoxDist( vec3(-0.5, center.y - gap, -0.5), vec3(0.5, center.y + gap, 0.5), rayOrigin, rayDirection );
+          vec2 boxInfoX = rayBoxDist( vec3(center.x - gap, -0.5, -0.5), vec3(center.x + gap, 0.5, 0.5), rayOrigin, rayDirection );
+
+          float t = 1e5;
+          if (boxInfoZ.y > 0.0) { t = boxInfoZ.x; }
+          if (boxInfoY.y > 0.0 && t > boxInfoY.x) { t = boxInfoY.x; }
+          if (boxInfoX.y > 0.0 && t > boxInfoX.x) { t = boxInfoX.x; }
+
+          if (t < 1e5) { hit = true; p = rayOrigin + rayDirection * ( t + 1e-5 ); return;  }
+          hit = false;
         }
 
         vec4 apply_colormap(float val) {

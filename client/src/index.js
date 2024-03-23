@@ -36,5 +36,11 @@ function updateGUI(viewer) {
   const label = gui.addFolder('label')
 
   segment.add(viewer.params, 'segmentVisible').name('visible').onChange(viewer.render)
+
   slice.add(viewer.params, 'sliceVisible').name('visible').onChange(viewer.render)
+  slice.add(viewer.params, 'sliceX', -0.5, 0.5).name('x').onChange(viewer.render)
+  slice.add(viewer.params, 'sliceY', -0.5, 0.5).name('y').onChange(viewer.render)
+  slice.add(viewer.params, 'sliceZ', -0.5, 0.5).name('z').onChange(viewer.render)
+
+  label.add(viewer.params, 'labelVisible').name('visible').onChange(viewer.render)
 }
