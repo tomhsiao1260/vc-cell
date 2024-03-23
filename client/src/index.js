@@ -30,11 +30,11 @@ function update(viewer) {
 function updateGUI(viewer) {
   if (gui) gui.destroy()
   gui = new GUI()
-  gui.add(viewer.params, 'label', 0, 1).onChange(viewer.render)
-  // gui.add(viewer.params, 'tlabel', 0.001, 0.1).onChange(viewer.render)
-  gui.add(viewer.params, 'surface', 0.002, 0.8).onChange(viewer.render)
-  gui.add(viewer.params, 'color', true).onChange(viewer.render)
-  gui.add(viewer.params, 'sliceX', -0.5, 0.5).onChange(viewer.render)
-  gui.add(viewer.params, 'sliceY', -0.5, 0.5).onChange(viewer.render)
-  gui.add(viewer.params, 'sliceZ', -0.5, 0.5).onChange(viewer.render)
+
+  const segment = gui.addFolder('segment')
+  const slice = gui.addFolder('slice')
+  const label = gui.addFolder('label')
+
+  segment.add(viewer.params, 'segmentVisible').name('visible').onChange(viewer.render)
+  slice.add(viewer.params, 'sliceVisible').name('visible').onChange(viewer.render)
 }

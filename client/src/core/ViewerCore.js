@@ -19,13 +19,8 @@ export default class ViewerCore {
     this.cmtextures = { viridis: new THREE.TextureLoader().load(textureViridis) }
 
     this.params = {}
-    this.params.color = true
-    this.params.surface = 0.8
-    this.params.label = 0
-    this.params.tlabel = 0.01
-    this.params.sliceX = 0.5
-    this.params.sliceY = 0.5
-    this.params.sliceZ = -0.5
+    this.params.segmentVisible = true
+    this.params.sliceVisible = true
 
     this.init()
   }
@@ -117,13 +112,8 @@ export default class ViewerCore {
 
     // this.renderer.render(this.scene, this.camera)
 
-    this.volumePass.material.uniforms.color.value = this.params.color
-    this.volumePass.material.uniforms.surface.value = this.params.surface
-    this.volumePass.material.uniforms.label.value = this.params.label
-    this.volumePass.material.uniforms.tlabel.value = this.params.tlabel
-    this.volumePass.material.uniforms.slice.value.x = this.params.sliceX
-    this.volumePass.material.uniforms.slice.value.y = this.params.sliceY
-    this.volumePass.material.uniforms.slice.value.z = this.params.sliceZ
+    this.volumePass.material.uniforms.segmentVisible.value = this.params.segmentVisible
+    this.volumePass.material.uniforms.sliceVisible.value = this.params.sliceVisible
 
     this.camera.updateMatrixWorld()
     this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)
