@@ -1,6 +1,12 @@
+<h1 align="center">VC cell</h1>
+
+<p align="center">
+    <img src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/2a336bc3-f7fa-42c8-b865-347fa63b2e0e" width="800px"/>
+</p>
+
 ## Introduction
 
-A Vesuvius Challenge tool to view a small region of volume with high resolution and flexibility.
+A Vesuvius Challenge tool to view a small volume region with high resolution and flexibility.
 
 ## Setup
 
@@ -24,6 +30,8 @@ label_path = '20230702185753_inklabels.png'
 ```
 
 ## Select a location
+
+<img width="226" alt="label" src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/c1c4fec9-0189-4ca5-9622-170a8533d1f1">
 
 Let's say you have a labeled image of a segment, but some local areas have some interesting behaviors that make you want to take a closer look. Take the following spot in segment `20230702185753` as an example, the uv coordinate of that spot is around `(0.521, 0.492)` (lower left and upper right corner are (0, 0) and (1, 1) respectively).
 
@@ -99,7 +107,7 @@ cd client
 npm install
 ```
 
-Once finished, you can start the dev server and navigate to http://localhost:5173
+Once finished, you can start the dev server and navigate to http://localhost:5173.
 
 ```bash
 npm run dev
@@ -109,4 +117,4 @@ cheer 🌱
 
 ## Notes
 
-Please don't hesitate to message me on Discord or here if you have any difficulty when using it.
+It is also recommended to adjust the browser to a smaller border size for a smoother experience. Full screen may be a bit laggy. In addition, please don't hesitate to message me on Discord or here if you have any difficulty or questions when using it.
