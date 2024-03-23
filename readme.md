@@ -85,9 +85,12 @@ python get_sdf.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size
 With `sdf.png` and `label.png`, you can generate your own customized inklabels in 3D space. Here's just a small example of how it works.
 
 ```bash
-python get_label.py
+python get_label.py --sdf output/sdf.tif --label output/label.tif --o output/inklabels.tif
 ```
 
-<!-- say what else it can be used in others use case (train nn, combine label, combine png) -->
+This command will generate an `inklabels.tif` in output folder which is the inklabel mapping in 3D space. You can tweak the weights in `get_label.py` to fit your use case (e.g. use `volume.tif` and `inklabels.tif` to train a neural net in this region).
+
+If you want to go further, you can also combine `sdf.tif` generated from different segments via picking the minimum value for a given pixel position. And use those info to generate a new `inklabels.tif` for these segments. Or try to merge `sdf.tif` and `inklabels.tif` from different region to form a larger map. The design is pretty flexible!
+
 <!-- improve js part & update readme -->
 <!-- film a demo & release! -->
