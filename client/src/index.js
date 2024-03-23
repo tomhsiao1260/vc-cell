@@ -3,6 +3,8 @@ import Loader from './Loader'
 import ViewerCore from './core/ViewerCore'
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min'
 
+let gui
+
 init()
 
 async function init() {
@@ -14,7 +16,8 @@ async function init() {
   renderer.setClearColor(0, 0)
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
-  const meta = await Loader.getMeta()
+  // const meta = await Loader.getMeta()
+  const meta = {}
   const viewer = new ViewerCore({ meta, renderer, canvas })
   update(viewer)
 }
@@ -24,14 +27,12 @@ function update(viewer) {
   updateGUI(viewer)
 }
 
-let gui
-
 function updateGUI(viewer) {
   if (gui) gui.destroy()
   gui = new GUI()
   gui.add(viewer.params, 'label', 0, 1).onChange(viewer.render)
-  gui.add(viewer.params, 'tlabel', 0.001, 0.1).onChange(viewer.render)
-  gui.add(viewer.params, 'surface', 0.001, 0.8).onChange(viewer.render)
+  // gui.add(viewer.params, 'tlabel', 0.001, 0.1).onChange(viewer.render)
+  gui.add(viewer.params, 'surface', 0.002, 0.8).onChange(viewer.render)
   gui.add(viewer.params, 'color', true).onChange(viewer.render)
   gui.add(viewer.params, 'sliceX', -0.5, 0.5).onChange(viewer.render)
   gui.add(viewer.params, 'sliceY', -0.5, 0.5).onChange(viewer.render)

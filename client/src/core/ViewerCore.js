@@ -22,10 +22,10 @@ export default class ViewerCore {
     this.params.color = true
     this.params.surface = 0.8
     this.params.label = 0
-    this.params.tlabel = 0.08
-    this.params.sliceX = 0
-    this.params.sliceY = 0
-    this.params.sliceZ = 0
+    this.params.tlabel = 0.01
+    this.params.sliceX = 0.5
+    this.params.sliceY = 0.5
+    this.params.sliceZ = -0.5
 
     this.init()
   }
@@ -65,7 +65,7 @@ export default class ViewerCore {
 
   async sdfTexGenerate() {
     const volume = await Loader.getVolumeData('volume.nrrd')
-    const label = await Loader.getVolumeData('inklabels.nrrd')
+    const label = await Loader.getVolumeData('label.nrrd')
     const sdf = await Loader.getVolumeData('sdf.nrrd')
 
     const { xLength: w, yLength: h, zLength: d } = volume
@@ -120,6 +120,7 @@ export default class ViewerCore {
     this.volumePass.material.uniforms.color.value = this.params.color
     this.volumePass.material.uniforms.surface.value = this.params.surface
     this.volumePass.material.uniforms.label.value = this.params.label
+    this.volumePass.material.uniforms.tlabel.value = this.params.tlabel
     this.volumePass.material.uniforms.slice.value.x = this.params.sliceX
     this.volumePass.material.uniforms.slice.value.y = this.params.sliceY
     this.volumePass.material.uniforms.slice.value.z = this.params.sliceZ

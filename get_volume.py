@@ -18,7 +18,7 @@ def getVolume(boxMin, boxMax):
     imageStack = np.transpose(volumeStack * 65535, (0, 1, 2)).astype(np.uint16)
     tifffile.imwrite('output/volume.tif', imageStack)
     # debug
-    # drawImage('output/volume.tif')
+    drawImage('output/volume.tif')
 
     return volumeStack
 

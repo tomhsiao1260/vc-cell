@@ -1,6 +1,6 @@
 ## Introduction
 
-A Vesuvius Challenge tool to view a small 3D region of high resolution volume with flexibility.
+A Vesuvius Challenge tool to view a small region of volume with high resolution and flexibility.
 
 ## Setup
 
@@ -26,8 +26,6 @@ label_path = '20230702185753_inklabels.png'
 ## Select a location
 
 Let's say you have a labeled image of a segment, but some local areas have some interesting behaviors that make you want to take a closer look. Take the following spot in segment `20230702185753` as an example, the uv coordinate of that spot is around `(0.521, 0.492)` (lower left and upper right corner are (0, 0) and (1, 1) respectively).
-
-<!-- need an image here -->
 
 And run this command:
 
@@ -90,7 +88,25 @@ python get_label.py --sdf output/sdf.tif --label output/label.tif --o output/ink
 
 This command will generate an `inklabels.tif` in output folder which is the inklabel mapping in 3D space. You can tweak the weights in `get_label.py` to fit your use case (e.g. use `volume.tif` and `inklabels.tif` to train a neural net in this region).
 
-If you want to go further, you can also combine `sdf.tif` generated from different segments via picking the minimum value for a given pixel position. And use those info to generate a new `inklabels.tif` for these segments. Or try to merge `sdf.tif` and `inklabels.tif` from different region to form a larger map. The design is pretty flexible!
+If you want to go further, you can also combine `sdf.tif` generated from different segments via picking the minimum value for a given pixel position. And use those info to generate a new `inklabels.tif` for these segments. Or try to merge `sdf.tif` and `inklabels.tif` from different region to form a larger map. I think it's pretty flexible!
 
-<!-- improve js part & update readme -->
-<!-- film a demo & release! -->
+## Visualize it on the browser
+
+Now we can visualize all of it on your localhost browser. Please make sure [Node.js](https://nodejs.org/en/download) is installed and then run the following command. It will install the related packages for this application.
+
+```bash
+cd client
+npm install
+```
+
+Once finished, you can start the dev server and navigate to http://localhost:5173
+
+```bash
+npm run dev
+```
+
+cheer 🌱
+
+## Notes
+
+Please don't hesitate to message me on Discord or here if you have any difficulty when using it.

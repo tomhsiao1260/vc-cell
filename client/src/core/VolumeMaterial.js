@@ -217,6 +217,11 @@ export class VolumeMaterial extends ShaderMaterial {
               vec3 uv = (sdfTransformInverse * nearPoint).xyz + vec3( 0.5 );
               vec3 uvLabel = (sdfTransformInverse * nearPointLabel).xyz + vec3( 0.5 );
 
+              // float ink = texture(labelTex, uvLabel).r;
+              // vec4 labelColor = vec4(ink, ink, ink, 1.0);
+              // gl_FragColor = label * labelColor;
+              // return;
+
               if (color) {
                 vec4 volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
                 if (intersectsSurfaceLabel) {
