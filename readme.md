@@ -33,7 +33,7 @@ label_path = '20230702185753_inklabels.png'
 
 <img width="226" alt="label" src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/c1c4fec9-0189-4ca5-9622-170a8533d1f1">
 
-Let's say you have a labeled image of a segment, but some local areas have some interesting behaviors that make you want to take a closer look. Take the following spot in segment `20230702185753` as an example, the uv coordinate of that spot is around `(0.521, 0.492)` (lower left and upper right corner are (0, 0) and (1, 1) respectively).
+Let's say you have a labeled image of a segment, but some local areas have some interesting behaviors that make you want to take a closer look. Take the spot above in segment `20230702185753` as an example, the uv coordinate of that spot is around `(0.521, 0.492)` (lower left and upper right corner are (0, 0) and (1, 1) respectively).
 
 And run this command:
 
@@ -64,7 +64,7 @@ Now we can extract a small volume from `grid_folder` via previous bounding box i
 python get_volume.py --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
-You will generate a `volume.tif` and a `volume.nrrd` in `output` folder. These two files are the same data in the same area. The tif version is for you view or process further. The nrrd version is for rendering in browser later.
+A `volume.tif` and a `volume.nrrd` will be generated in `output` folder. These two files are the same data in the same area. The tif version is for you to view or process further. The nrrd version is for rendering in browser later.
 
 ## Cut the segment
 
@@ -76,19 +76,21 @@ python cut_obj.py --o output/segment.obj --center 4276.67 3326.57 6702.28 --size
 
 It will generate a cropped OBJ file in output folder called `segment.obj` which only preserves the data within that bounding box.
 
-## Get the inklabels in 3D space
+## Get the Distance Field
 
-With the info above, in that region, we can generate inklabels in 3D space. This command will generate a `sdf.tif` and `label.tif` in output folder with its corresponding `.nrrd` files.
+With the info above, in that region, we can generate inklabels in 3D space. But before that, we need to calculate the distance field. This command will generate a `sdf.tif` and `label.tif` with its corresponding `.nrrd` files.
 
 ```bash
 python get_sdf.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
-`sdf.png` store the distance field info inside that bounding box. Each pixel store a normalized distance value between this point and `segment.obj`.
+`sdf.png` store the distance field info inside that bounding box. Each pixel store a normalized distance value between that point and `segment.obj`.
 
 `label.png` store the inklabels info inside that bounding box. Each pixel stores the inklabels intensity from the nearest point on `segment.obj`.
 
-With `sdf.png` and `label.png`, you can generate your own customized inklabels in 3D space. Here's just a small example of how it works.
+## Get the inklabels in 3D space
+
+With `sdf.png` and `label.png`, you can generate your own customized inklabels in 3D space. Here's a small example of how it works.
 
 ```bash
 python get_label.py --sdf output/sdf.tif --label output/label.tif --o output/inklabels.tif
@@ -96,18 +98,18 @@ python get_label.py --sdf output/sdf.tif --label output/label.tif --o output/ink
 
 This command will generate an `inklabels.tif` in output folder which is the inklabel mapping in 3D space. You can tweak the weights in `get_label.py` to fit your use case (e.g. use `volume.tif` and `inklabels.tif` to train a neural net in this region).
 
-If you want to go further, you can also combine `sdf.tif` generated from different segments via picking the minimum value for a given pixel position. And use those info to generate a new `inklabels.tif` for these segments. Or try to merge `sdf.tif` and `inklabels.tif` from different region to form a larger map. I think it's pretty flexible!
+If you want to go further, you can also combine `sdf.tif` generated from different segments via picking the minimum value for a given pixel position. And use those info to generate a new `inklabels.tif` for these segments. Or try to merge `sdf.tif` and `inklabels.tif` from different region to form a larger map. I think it's pretty flexible to explore!
 
 ## Visualize it on the browser
 
-Now we can visualize all of it on your localhost browser. Please make sure [Node.js](https://nodejs.org/en/download) is installed and then run the following command. It will install the related packages for this application.
+Now we can visualize all of it on your localhost browser. Please make sure [Node.js](https://nodejs.org/en/download) is downloaded and then run the following command. It will install the related packages for this application.
 
 ```bash
 cd client
 npm install
 ```
 
-Once finished, you can start the dev server and navigate to http://localhost:5173.
+Once finished, you can start the dev server and navigate to http://localhost:5173
 
 ```bash
 npm run dev
