@@ -22,6 +22,7 @@ export class VolumeMaterial extends ShaderMaterial {
         sliceVisible: { value: true },
         labelVisible: { value: true },
         slice: { value: new Vector3() },
+        surface: { value: 0 },
       },
 
       vertexShader: /* glsl */ `
@@ -44,6 +45,7 @@ export class VolumeMaterial extends ShaderMaterial {
         uniform vec2 clim;
         uniform vec3 size;
         uniform vec3 slice;
+        uniform float surface;
         uniform sampler3D labelTex;
         uniform sampler3D sdfTex;
         uniform sampler3D volumeTex;
@@ -61,8 +63,7 @@ export class VolumeMaterial extends ShaderMaterial {
 
         vec4 apply_colormap(float val);
         vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
-
-        void sliceXYZ(out vec3 p, out bool hit, vec3 center, vec3 rayOrigin, vec3 rayDir);
+        void segment(inout vec3 pn, inout vec3 pf, out bool hit, vec3 rayDir);
 
         // distance to box bounds
 				vec2 rayBoxDist( vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir ) {
@@ -76,6 +77,22 @@ export class VolumeMaterial extends ShaderMaterial {
 					float distInsideBox = max( 0.0, distB - distToBox );
 					return vec2( distToBox, distInsideBox );
 				}
+
+        // slice XYZ plane
+        void sliceXYZ(out vec3 p, out bool hit, vec3 center, vec3 rayOrigin, vec3 rayDirection) {
+          float gap = -0.001;
+          vec2 boxInfoZ = rayBoxDist( vec3(-0.5, -0.5, center.z - gap), vec3(0.5, 0.5, center.z + gap), rayOrigin, rayDirection );
+          vec2 boxInfoY = rayBoxDist( vec3(-0.5, center.y - gap, -0.5), vec3(0.5, center.y + gap, 0.5), rayOrigin, rayDirection );
+          vec2 boxInfoX = rayBoxDist( vec3(center.x - gap, -0.5, -0.5), vec3(center.x + gap, 0.5, 0.5), rayOrigin, rayDirection );
+
+          float t = 1e5;
+          if (boxInfoZ.y > 0.0) { t = boxInfoZ.x; }
+          if (boxInfoY.y > 0.0 && t > boxInfoY.x) { t = boxInfoY.x; }
+          if (boxInfoX.y > 0.0 && t > boxInfoX.x) { t = boxInfoX.x; }
+
+          if (t < 1e5) { hit = true; p = rayOrigin + rayDirection * ( t + 1e-5 ); return;  }
+          hit = false;
+        }
 
         void main() {
           float fragCoordZ = -1.;
@@ -105,29 +122,62 @@ export class VolumeMaterial extends ShaderMaterial {
             vec3 p; bool sliceHit;
             sliceXYZ(p, sliceHit, slice, sdfRayOrigin, sdfRayDirection);
 
-            if (sliceVisible && sliceHit) {
-              float v = texture(volumeTex, p.xyz + vec3( 0.5 )).r;
+            // if (sliceVisible && sliceHit) {
+            //   float v = texture(volumeTex, p.xyz + vec3( 0.5 )).r;
+            //   gl_FragColor = vec4(v, v, v, 1.0);
+            // }
+
+            vec4 boxNearPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + 1e-5 ), 1.0 );
+            vec4 boxFarPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + distInsideBox - 1e-5 ), 1.0 );
+            vec3 pn = (sdfTransform * boxNearPoint).xyz;
+            vec3 pf = (sdfTransform * boxFarPoint).xyz;
+
+            bool segmentHit;
+            segment(pn, pf, segmentHit, rayDirection);
+
+            if (segmentVisible && segmentHit) {
+              vec3 uv = (sdfTransformInverse * vec4(pn, 1.0)).xyz + vec3( 0.5 );
+              float v = texture(volumeTex, uv).r;
               gl_FragColor = vec4(v, v, v, 1.0);
-              return;
             }
+
+            return;
           }
 
           if (gl_FragColor.a < 0.05){ discard; }
         }
 
-        void sliceXYZ(out vec3 p, out bool hit, vec3 center, vec3 rayOrigin, vec3 rayDirection) {
-          float gap = -0.001;
-          vec2 boxInfoZ = rayBoxDist( vec3(-0.5, -0.5, center.z - gap), vec3(0.5, 0.5, center.z + gap), rayOrigin, rayDirection );
-          vec2 boxInfoY = rayBoxDist( vec3(-0.5, center.y - gap, -0.5), vec3(0.5, center.y + gap, 0.5), rayOrigin, rayDirection );
-          vec2 boxInfoX = rayBoxDist( vec3(center.x - gap, -0.5, -0.5), vec3(center.x + gap, 0.5, 0.5), rayOrigin, rayDirection );
-
-          float t = 1e5;
-          if (boxInfoZ.y > 0.0) { t = boxInfoZ.x; }
-          if (boxInfoY.y > 0.0 && t > boxInfoY.x) { t = boxInfoY.x; }
-          if (boxInfoX.y > 0.0 && t > boxInfoX.x) { t = boxInfoX.x; }
-
-          if (t < 1e5) { hit = true; p = rayOrigin + rayDirection * ( t + 1e-5 ); return;  }
+        // SDF ray march (near & far)
+        void segment(inout vec3 pn, inout vec3 pf, out bool hit, vec3 rayDirection) {
           hit = false;
+
+          // near -> surface
+          for ( int i = 0; i < MAX_STEPS; i ++ ) {
+            // sdf box extends from - 0.5 to 0.5
+            // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds
+            vec3 uv = ( sdfTransformInverse * vec4(pn, 1.0) ).xyz + vec3( 0.5 );
+            // get the distance to surface and exit the loop if we're close to the surface
+            float distanceToSurface = texture( sdfTex, uv ).r - surface;
+            if ( distanceToSurface < SURFACE_EPSILON ) { hit = true; break; }
+            if ( uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || uv.z < 0.0 || uv.z > 1.0 ) { break; }
+            // step the ray
+            pn += rayDirection * abs( distanceToSurface );
+          }
+
+          if (hit) {
+            // far -> surface
+            for ( int i = 0; i < MAX_STEPS; i ++ ) {
+              // sdf box extends from - 0.5 to 0.5
+              // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds
+              vec3 uv = ( sdfTransformInverse * vec4(pf, 1.0) ).xyz + vec3( 0.5 );
+              // get the distance to surface and exit the loop if we're close to the surface
+              float distanceToSurface = texture( sdfTex, uv ).r - surface;
+              if ( distanceToSurface < SURFACE_EPSILON ) { break; }
+              if ( uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || uv.z < 0.0 || uv.z > 1.0 ) { break; }
+              // step the ray
+              pf -= rayDirection * abs( distanceToSurface );
+            }
+          }
         }
 
         vec4 apply_colormap(float val) {

@@ -28,6 +28,8 @@ export default class ViewerCore {
     this.params.sliceY = 0.0
     this.params.sliceZ = 0.0
 
+    this.params.surface = 0.002
+
     this.init()
   }
 
@@ -125,6 +127,8 @@ export default class ViewerCore {
     this.volumePass.material.uniforms.slice.value.x = this.params.sliceX
     this.volumePass.material.uniforms.slice.value.y = this.params.sliceY
     this.volumePass.material.uniforms.slice.value.z = this.params.sliceZ
+
+    this.volumePass.material.uniforms.surface.value = this.params.surface
 
     this.camera.updateMatrixWorld()
     this.volumePass.material.uniforms.projectionInverse.value.copy(this.camera.projectionMatrixInverse)
