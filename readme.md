@@ -41,14 +41,14 @@ The output would be something like this:
 The following grids are required:
 cell_yxz_007_009_014.tif
 
-Volume Minimum (x, y, z):
+Volume Center (x, y, z):
 4276.67 3326.57 6702.28
 
-Volume Maximum (w, h, d):
+Volume Size (w, h, d):
 150 100 120
 ```
 
-This means we need to download `cell_yxz_007_009_014.tif` and put it into the corresponding `grid_folder`. And the remaining info is the center and size ​​of a volume bounding box formed around this uv coordinate.
+This means we need to download `cell_yxz_007_009_014.tif` and put it into the corresponding `grid_folder`. And the remaining info is the center and size ​​of a volume bounding box formed around this uv coordinate. The center is the position of that uv coordinate in 3D space.
 
 ## Get the volume
 
@@ -58,7 +58,7 @@ Now we can extract a small volume from `grid_folder` via previous bounding box i
 python get_volume.py --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
-You will generate a `volume.png` and a `volume.nrrd` in `output` folder. These two files are the same data in the same area. The png version is just for easier viewing.
+You will generate a `volume.tif` and a `volume.nrrd` in `output` folder. These two files are the same data in the same area. The tif version is for you view or process further. The nrrd version is for rendering in browser later.
 
 ## Cut the segment
 
@@ -72,16 +72,22 @@ It will generate a cropped OBJ file in output folder called `segment.obj` which 
 
 ## Get the inklabels in 3D space
 
-With the info above, in that region, we can generate inklabels in 3D space.
+With the info above, in that region, we can generate inklabels in 3D space. This command will generate a `sdf.tif` and `label.tif` in output folder with its corresponding `.nrrd` files.
 
 ```bash
-python get_label.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
+python get_sdf.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
-It will generate a `sdf.png` and `inklabels.png` in output folder with its corresponding `.nrrd` files.
+`sdf.png` store the distance field info inside that bounding box. Each pixel store a normalized distance value between this point and `segment.obj`.
 
-<!-- write some sdf, inklabels description here -->
-<!-- write a small function to generate new inklabels -->
+`label.png` store the inklabels info inside that bounding box. Each pixel stores the inklabels intensity from the nearest point on `segment.obj`.
+
+With `sdf.png` and `label.png`, you can generate your own customized inklabels in 3D space. Here's just a small example of how it works.
+
+```bash
+python get_label.py
+```
+
 <!-- say what else it can be used in others use case (train nn, combine label, combine png) -->
 <!-- improve js part & update readme -->
 <!-- film a demo & release! -->
