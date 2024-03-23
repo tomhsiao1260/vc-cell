@@ -47,19 +47,22 @@ def getLabel(data, pStack, iStack, path):
 
     return labelStack
 
-# python get_label.py --min 4226.67 3276.57 6652.28 --max 4326.67 3376.57 6752.28
+# python get_label.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Generate volume via boudning box')
-    parser.add_argument('--min', nargs=3, type=float, metavar=('X', 'Y', 'Z'), help='x, y, z value of bounding box minimum')
-    parser.add_argument('--max', nargs=3, type=float, metavar=('X', 'Y', 'Z'), help='x, y, z value of bounding box maximum')
+    parser.add_argument('--i', type=str, help='OBJ input path')
+    parser.add_argument('--center', nargs=3, type=float, metavar=('X', 'Y', 'Z'), help='bounding box center (x, y, z)')
+    parser.add_argument('--size', nargs=3, type=int, metavar=('X', 'Y', 'Z'), help='bounding box size (w, h, d)')
     args = parser.parse_args()
 
-    boxMin = np.array(args.min)
-    boxMax = np.array(args.max)
+    center = np.array(args.center)
+    boxSize = np.array(args.size)
+    boxMin = center - boxSize / 2
+    boxMax = center + boxSize / 2
 
     # extract sdf
-    data = parse_obj('output/segment.obj')
+    data = parse_obj(args.i)
     print('Distance field calculating ...')
     pStack, iStack, dStack = getSDF(data, boxMin, boxMax)
 

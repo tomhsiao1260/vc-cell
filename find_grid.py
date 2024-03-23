@@ -18,18 +18,19 @@ if __name__ == "__main__":
     index = np.argmin(d)
 
     center = data['vertices'][index]
-    boxMin = center - np.array([50, 50, 50])
-    boxMax = center + np.array([50, 50, 50])
+    boxSize = np.array([ 150, 100, 120 ])
+    boxMin = center - boxSize / 2
+    boxMax = center + boxSize / 2
     nameList = getGridName(boxMin, boxMax)
 
     print('The following grids are required:')
     for grid in nameList: print(grid)
     print('')
-    print('Volume Minimum:')
-    print(f'--min {boxMin[0]} {boxMin[1]} {boxMin[2]}')
+    print('Volume Center (x, y, z):')
+    print(f'{center[0]} {center[1]} {center[2]}')
     print('')
-    print('Volume Maximum:')
-    print(f'--max {boxMax[0]} {boxMax[1]} {boxMax[2]}')
+    print('Volume Size (w, h, d):')
+    print(f'{boxSize[0]} {boxSize[1]} {boxSize[2]}')
     print('')
 
 

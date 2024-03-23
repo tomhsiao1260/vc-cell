@@ -41,21 +41,21 @@ The output would be something like this:
 The following grids are required:
 cell_yxz_007_009_014.tif
 
-Volume Minimum:
---min 4226.67 3276.57 6652.28
+Volume Minimum (x, y, z):
+4276.67 3326.57 6702.28
 
-Volume Maximum:
---max 4326.67 3376.57 6752.28
+Volume Maximum (w, h, d):
+150 100 120
 ```
 
-This means we need to download `cell_yxz_007_009_014.tif` and put it into the corresponding `grid_folder`. And the remaining info is the min and max values (x, y, z) ​​of a volume bounding box formed around this uv coordinate.
+This means we need to download `cell_yxz_007_009_014.tif` and put it into the corresponding `grid_folder`. And the remaining info is the center and size ​​of a volume bounding box formed around this uv coordinate.
 
 ## Get the volume
 
 Now we can extract a small volume from `grid_folder` via previous bounding box info.
 
 ```bash
-python get_volume.py --min 4226.67 3276.57 6652.28 --max 4326.67 3376.57 6752.28
+python get_volume.py --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
 You will generate a `volume.png` and a `volume.nrrd` in `output` folder. These two files are the same data in the same area. The png version is just for easier viewing.
@@ -65,7 +65,7 @@ You will generate a `volume.png` and a `volume.nrrd` in `output` folder. These t
 Let's extract the corresponding segment obj data within this bounding box.
 
 ```bash
-python cut_obj.py --min 4226.67 3276.57 6652.28 --max 4326.67 3376.57 6752.28
+python cut_obj.py --o output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
 It will generate a cropped OBJ file in output folder called `segment.obj` which only preserves the data within that bounding box.
@@ -75,7 +75,13 @@ It will generate a cropped OBJ file in output folder called `segment.obj` which 
 With the info above, in that region, we can generate inklabels in 3D space.
 
 ```bash
-python get_label.py --min 4226.67 3276.57 6652.28 --max 4326.67 3376.57 6752.28
+python get_label.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
 ```
 
 It will generate a `sdf.png` and `inklabels.png` in output folder with its corresponding `.nrrd` files.
+
+<!-- write some sdf, inklabels description here -->
+<!-- write a small function to generate new inklabels -->
+<!-- say what else it can be used in others use case (train nn, combine label, combine png) -->
+<!-- improve js part & update readme -->
+<!-- film a demo & release! -->
