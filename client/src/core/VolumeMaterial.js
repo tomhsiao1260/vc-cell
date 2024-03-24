@@ -22,6 +22,7 @@ export class VolumeMaterial extends ShaderMaterial {
         sliceVisible: { value: true },
         labelVisible: { value: true },
         slice: { value: new Vector3() },
+        colorful: { value: true },
         surface: { value: 0 },
       },
 
@@ -45,6 +46,7 @@ export class VolumeMaterial extends ShaderMaterial {
         uniform vec2 clim;
         uniform vec3 size;
         uniform vec3 slice;
+        uniform bool colorful;
         uniform float surface;
         uniform sampler3D labelTex;
         uniform sampler3D sdfTex;
@@ -63,7 +65,7 @@ export class VolumeMaterial extends ShaderMaterial {
 
         vec4 apply_colormap(float val);
         vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
-        void segment(inout vec3 pn, inout vec3 pf, out bool hit, vec3 rayDir);
+        void segment(inout vec3 p, inout bool hit, vec3 rayDir);
 
         // distance to box bounds
 				vec2 rayBoxDist( vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir ) {
@@ -119,64 +121,76 @@ export class VolumeMaterial extends ShaderMaterial {
 					gl_FragColor = vec4( 0.0 );
 
           if ( intersectsBox ) {
-            vec3 p; bool sliceHit;
-            sliceXYZ(p, sliceHit, slice, sdfRayOrigin, sdfRayDirection);
+            int nsteps = int(boxIntersectionInfo.y * size.x / relative_step_size + 0.5);
+            if ( nsteps < 1 ) discard;
 
-            // if (sliceVisible && sliceHit) {
-            //   float v = texture(volumeTex, p.xyz + vec3( 0.5 )).r;
-            //   gl_FragColor = vec4(v, v, v, 1.0);
-            // }
+            // For testing: show the number of steps. This helps to establish whether the rays are correctly oriented
+            // gl_FragColor = vec4(0.0, float(nsteps) / size.x, 1.0, 1.0);
+            // return;
 
-            vec4 boxNearPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + 1e-5 ), 1.0 );
-            vec4 boxFarPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + distInsideBox - 1e-5 ), 1.0 );
-            vec3 pn = (sdfTransform * boxNearPoint).xyz;
-            vec3 pf = (sdfTransform * boxFarPoint).xyz;
+            bool sliceHit = false;
+            bool segmentHit = false;
+            vec3 p; vec3 pn; vec3 pf;
 
-            bool segmentHit;
-            segment(pn, pf, segmentHit, rayDirection);
+            if (sliceVisible) {
+              sliceXYZ(p, sliceHit, slice, sdfRayOrigin, sdfRayDirection);
 
-            if (segmentVisible && segmentHit) {
-              vec3 uv = (sdfTransformInverse * vec4(pn, 1.0)).xyz + vec3( 0.5 );
-              float v = texture(volumeTex, uv).r;
-              gl_FragColor = vec4(v, v, v, 1.0);
+              if (sliceHit) {
+                float v = texture(volumeTex, p.xyz + vec3( 0.5 )).r;
+                gl_FragColor = vec4(v, v, v, 1.0);
+              }
             }
 
-            return;
+            if (segmentVisible) {
+              vec4 boxNearPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + 1e-5 ), 1.0 );
+              vec4 boxFarPoint = vec4( sdfRayOrigin + sdfRayDirection * ( distToBox + distInsideBox - 1e-5 ), 1.0 );
+              vec3 pn = (sdfTransform * boxNearPoint).xyz;
+              vec3 pf = (sdfTransform * boxFarPoint).xyz;
+              
+              // near -> surface
+              segment(pn, segmentHit, rayDirection);
+
+              if (segmentHit) {
+                p = (sdfTransform * vec4(p, 1.0)).xyz;
+                if (sliceHit && length(p - rayOrigin) < length(pn - rayOrigin)) return;
+
+                // far -> surface
+                segment(pf, segmentHit, -rayDirection);
+
+                vec3 uv = (sdfTransformInverse * vec4(pn, 1.0)).xyz + vec3( 0.5 );
+                
+                // volume rendering
+                if (colorful) {
+                  float thickness = length(pf - pn);
+                  nsteps = int(thickness * size.x / relative_step_size + 0.5);
+                  if ( nsteps < 1 ) discard;
+  
+                  vec3 step = sdfRayDirection * thickness / float(nsteps);
+                  vec4 volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
+                  gl_FragColor = volumeColor; return;
+                } else {
+                  float v = texture(volumeTex, uv).r;
+                  gl_FragColor = vec4(v, v, v, 1.0); return;
+                }
+              }
+            }
           }
 
           if (gl_FragColor.a < 0.05){ discard; }
         }
 
-        // SDF ray march (near & far)
-        void segment(inout vec3 pn, inout vec3 pf, out bool hit, vec3 rayDirection) {
-          hit = false;
-
-          // near -> surface
+        // SDF ray march
+        void segment(inout vec3 p, inout bool hit, vec3 rayDirection) {
           for ( int i = 0; i < MAX_STEPS; i ++ ) {
             // sdf box extends from - 0.5 to 0.5
             // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds
-            vec3 uv = ( sdfTransformInverse * vec4(pn, 1.0) ).xyz + vec3( 0.5 );
+            vec3 uv = ( sdfTransformInverse * vec4(p, 1.0) ).xyz + vec3( 0.5 );
             // get the distance to surface and exit the loop if we're close to the surface
             float distanceToSurface = texture( sdfTex, uv ).r - surface;
             if ( distanceToSurface < SURFACE_EPSILON ) { hit = true; break; }
             if ( uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || uv.z < 0.0 || uv.z > 1.0 ) { break; }
             // step the ray
-            pn += rayDirection * abs( distanceToSurface );
-          }
-
-          if (hit) {
-            // far -> surface
-            for ( int i = 0; i < MAX_STEPS; i ++ ) {
-              // sdf box extends from - 0.5 to 0.5
-              // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds
-              vec3 uv = ( sdfTransformInverse * vec4(pf, 1.0) ).xyz + vec3( 0.5 );
-              // get the distance to surface and exit the loop if we're close to the surface
-              float distanceToSurface = texture( sdfTex, uv ).r - surface;
-              if ( distanceToSurface < SURFACE_EPSILON ) { break; }
-              if ( uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || uv.z < 0.0 || uv.z > 1.0 ) { break; }
-              // step the ray
-              pf -= rayDirection * abs( distanceToSurface );
-            }
+            p += rayDirection * abs( distanceToSurface );
           }
         }
 
@@ -192,7 +206,7 @@ export class VolumeMaterial extends ShaderMaterial {
           vec3 loc = start_loc;
 
           // float val = texture(volumeTex, start_loc).r;
-          // gl_FragColor = apply_colormap(val); return;
+          // return apply_colormap(val);
 
           // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
           // non-constant expression. So we use a hard-coded max, and an additional condition
@@ -202,7 +216,6 @@ export class VolumeMaterial extends ShaderMaterial {
               break;
             // Sample from the 3D texture
             float val = texture(volumeTex, loc).r;
-            float val_d = texture(sdfTex, loc).r;
             // Apply MIP operation
             if (val > max_val) {
               max_val = val;
@@ -213,8 +226,7 @@ export class VolumeMaterial extends ShaderMaterial {
           }
 
           // Resolve final color
-          vec4 volumeColor = apply_colormap(max_val);
-          return volumeColor;
+          return apply_colormap(max_val);
         }
       `,
     })

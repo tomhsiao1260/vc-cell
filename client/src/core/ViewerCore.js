@@ -24,10 +24,11 @@ export default class ViewerCore {
     this.params.sliceVisible = true
     this.params.labelVisible = true
 
-    this.params.sliceX = 0.0
-    this.params.sliceY = 0.0
-    this.params.sliceZ = 0.0
+    this.params.sliceX = 0.5
+    this.params.sliceY = 0.5
+    this.params.sliceZ = 0.5
 
+    this.params.colorful = true
     this.params.surface = 0.002
 
     this.init()
@@ -128,6 +129,7 @@ export default class ViewerCore {
     this.volumePass.material.uniforms.slice.value.y = this.params.sliceY
     this.volumePass.material.uniforms.slice.value.z = this.params.sliceZ
 
+    this.volumePass.material.uniforms.colorful.value = this.params.colorful
     this.volumePass.material.uniforms.surface.value = this.params.surface
 
     this.camera.updateMatrixWorld()
