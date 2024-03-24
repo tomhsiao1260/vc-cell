@@ -44,5 +44,6 @@ function updateGUI(viewer) {
   slice.add(viewer.params, 'sliceY', -0.5, 0.5).name('y').onChange(viewer.render)
   slice.add(viewer.params, 'sliceZ', -0.5, 0.5).name('z').onChange(viewer.render)
 
-  label.add(viewer.params, 'labelVisible').name('visible').onChange(viewer.render)
+  label.add(viewer.params, 'label', 0, 1).name('label').onChange(viewer.render)
+  label.add(viewer.params, 'tlabel', 0.01, 0.06).name('thickness').onChange(viewer.render)
 }

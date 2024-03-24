@@ -24,6 +24,8 @@ export class VolumeMaterial extends ShaderMaterial {
         slice: { value: new Vector3() },
         colorful: { value: true },
         surface: { value: 0 },
+        label: { value: 0 },
+        tlabel: { value: 0 },
       },
 
       vertexShader: /* glsl */ `
@@ -47,6 +49,8 @@ export class VolumeMaterial extends ShaderMaterial {
         uniform vec3 size;
         uniform vec3 slice;
         uniform bool colorful;
+        uniform float label;
+        uniform float tlabel;
         uniform float surface;
         uniform sampler3D labelTex;
         uniform sampler3D sdfTex;
@@ -65,7 +69,7 @@ export class VolumeMaterial extends ShaderMaterial {
 
         vec4 apply_colormap(float val);
         vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
-        void segment(inout vec3 p, inout bool hit, vec3 rayDir);
+        void segment(inout vec3 p, inout bool hit, float surface, vec3 rayDir);
 
         // distance to box bounds
 				vec2 rayBoxDist( vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir ) {
@@ -130,6 +134,7 @@ export class VolumeMaterial extends ShaderMaterial {
 
             bool sliceHit = false;
             bool segmentHit = false;
+            bool labelHit = false;
             vec3 p; vec3 pn; vec3 pf;
 
             if (sliceVisible) {
@@ -148,30 +153,50 @@ export class VolumeMaterial extends ShaderMaterial {
               vec3 pf = (sdfTransform * boxFarPoint).xyz;
               
               // near -> surface
-              segment(pn, segmentHit, rayDirection);
+              segment(pn, segmentHit, surface, rayDirection);
 
               if (segmentHit) {
                 p = (sdfTransform * vec4(p, 1.0)).xyz;
                 if (sliceHit && length(p - rayOrigin) < length(pn - rayOrigin)) return;
 
                 // far -> surface
-                segment(pf, segmentHit, -rayDirection);
+                segment(pf, segmentHit, surface, -rayDirection);
 
                 vec3 uv = (sdfTransformInverse * vec4(pn, 1.0)).xyz + vec3( 0.5 );
+                vec4 volumeColor;
                 
-                // volume rendering
                 if (colorful) {
+                  // volume
                   float thickness = length(pf - pn);
                   nsteps = int(thickness * size.x / relative_step_size + 0.5);
                   if ( nsteps < 1 ) discard;
-  
                   vec3 step = sdfRayDirection * thickness / float(nsteps);
-                  vec4 volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
-                  gl_FragColor = volumeColor; return;
+                  volumeColor = cast_mip(uv, step, nsteps, sdfRayDirection);
+
+                  // label
+                  segment(pn, labelHit, tlabel, rayDirection);
+                  if (labelHit) {
+                    float v = texture(labelTex, uv).r;
+                    vec4 labelColor = vec4(v, v, v, 1.0);
+                    gl_FragColor = label * labelColor + (1.0 - label) * volumeColor;
+                    return;
+                  }
                 } else {
+                  // volume
                   float v = texture(volumeTex, uv).r;
-                  gl_FragColor = vec4(v, v, v, 1.0); return;
+                  volumeColor = vec4(v, v, v, 1.0);
+
+                  // label
+                  float d = texture(sdfTex, uv).r;
+                  if (d < tlabel) {
+                    float ink = texture(labelTex, uv).r;
+                    vec4 labelColor = vec4(ink, ink, ink, 1.0);
+                    gl_FragColor = label * labelColor + (1.0 - label) * volumeColor;
+                    return;
+                  }
                 }
+
+                gl_FragColor = volumeColor; return;
               }
             }
           }
@@ -180,7 +205,7 @@ export class VolumeMaterial extends ShaderMaterial {
         }
 
         // SDF ray march
-        void segment(inout vec3 p, inout bool hit, vec3 rayDirection) {
+        void segment(inout vec3 p, inout bool hit, float surface, vec3 rayDirection) {
           for ( int i = 0; i < MAX_STEPS; i ++ ) {
             // sdf box extends from - 0.5 to 0.5
             // transform into the local bounds space [ 0, 1 ] and check if we're inside the bounds
