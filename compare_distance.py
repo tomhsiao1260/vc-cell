@@ -16,7 +16,17 @@ def cut_node(data, node):
 
     return data_copy
 
-def save_node(data, node, depth, name = ''):
+def cut_box(data, boundingData):
+    boxMin = boundingData[:3]
+    boxMax = boundingData[3:]
+
+    data_copy = copy.deepcopy(data)
+    cutBounding(data_copy, boxMin, boxMax)
+
+    return data_copy
+
+
+def save_node(data, data2, node, depth, name = ''):
     depth -= 1
 
     leftNode = node.left
@@ -25,15 +35,20 @@ def save_node(data, node, depth, name = ''):
     leftName = name + '0'
     rightName = name + '1'
 
+    leftData2 = cut_box(data2, leftNode.boundingData)
+    rightData2 = cut_box(data2, rightNode.boundingData)
+
     if (depth == 0):
         cut_data = cut_node(data, leftNode)
         save_obj(f'{ leftName }.obj', cut_data)
+        save_obj(f'{ leftName }_.obj', leftData2)
 
         cut_data = cut_node(data, rightNode)
         save_obj(f'{ rightName }.obj', cut_data)
+        save_obj(f'{ rightName }_.obj', rightData2)
     else:
-        save_node(data, leftNode, depth, leftName)
-        save_node(data, rightNode, depth, rightName)
+        save_node(data, leftData2, leftNode, depth, leftName)
+        save_node(data, rightData2, rightNode, depth, rightName)
 
 path_1 = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184423.obj'
 path_2 = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184424.obj'
@@ -48,8 +63,9 @@ data_2 = parse_obj('cut_2.obj')
 bvh = MeshBVH(data_1)
 
 data = bvh.data
+data2 = data_2
 node = bvh._roots[0]
-save_node(data, node, depth=5)
+save_node(data, data2, node, depth=5)
 
 # data_1 = parse_obj('cut_crunk_1.obj')
 # data_2 = parse_obj('cut_crunk_2.obj')
