@@ -120,8 +120,11 @@ class Triangle:
         v = np.where(spaceW, vp, v)
         w = np.where(spaceW, wp, w)
 
-        u = u[:,:,np.newaxis]
-        v = v[:,:,np.newaxis]
-        w = w[:,:,np.newaxis]
+        # u = u[:,:,np.newaxis]
+        # v = v[:,:,np.newaxis]
+        # w = w[:,:,np.newaxis]
+        u = u[:,np.newaxis]
+        v = v[:,np.newaxis]
+        w = w[:,np.newaxis]
 
         return u * v1 + v * v2 + w * v0
