@@ -90,6 +90,14 @@ def d_cal(data_1, data_2):
 path_1 = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184423.obj'
 path_2 = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184424.obj'
 
+# data_1 = parse_obj(path_1)
+# data_2 = parse_obj(path_2)
+
+# cutLayer(data_1, 5000, 5100)
+# cutLayer(data_2, 5000, 5100)
+# save_obj('cut_1.obj', data_1)
+# save_obj('cut_2.obj', data_2)
+
 data_1 = parse_obj('cut_1.obj')
 data_2 = parse_obj('cut_2.obj')
 
@@ -100,16 +108,29 @@ data2 = data_2
 
 node = bvh._roots[0]
 d, uv = save_n(data, data2, node, depth=5)
+d_max = np.max(d)
 
-w, h = 100, 100
-image = np.zeros((h, w, 3), dtype=np.uint8)
-color = (255, 255, 255)
+# w, h = 500, 500
+# image = np.zeros((h, w, 3), dtype=np.uint8)
 
-# d_max = np.max(d)
+image = cv2.imread('d.png')
+h, w = image.shape[:2]
 
-# cv2.imshow('distance', image)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+for depth, uv in zip(d, uv):
+    u, v = uv
+
+    u = int(w * u)
+    v = int(h * (1-v))
+
+    value = 255 * depth / d_max
+    color = (value, value, value)
+    cv2.circle(image, (u, v), 1, color, -1)
+
+cv2.imshow('distance', image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+cv2.imwrite('d.png', image)
 
 
 
