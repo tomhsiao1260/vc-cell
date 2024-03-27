@@ -25,18 +25,18 @@ def cut_obj(data, splitAxis, splitOffset, survive):
     tri_lower_bool = triVertices[:, :, splitAxis] < splitOffset
     tri_lower_num = np.sum(tri_lower_bool, axis=1)
 
-    # straighten the cutting edge (tweak the edge vertices position)
-    f = data['faces'][tri_lower_num == 1]
-    v = data['vertices'][f[:,:,0] - 1]
-    mask = v[:, :, splitAxis] < splitOffset
-    i = np.unique(f[:, :, 0][mask] - 1)
-    data['vertices'][i, splitAxis] = splitOffset
+    # # straighten the cutting edge (tweak the edge vertices position)
+    # f = data['faces'][tri_lower_num == 1]
+    # v = data['vertices'][f[:,:,0] - 1]
+    # mask = v[:, :, splitAxis] < splitOffset
+    # i = np.unique(f[:, :, 0][mask] - 1)
+    # data['vertices'][i, splitAxis] = splitOffset
 
-    f = data['faces'][tri_lower_num == 2]
-    v = data['vertices'][f[:,:,0] - 1]
-    mask = v[:, :, splitAxis] > splitOffset
-    i = np.unique(f[:, :, 0][mask] - 1)
-    data['vertices'][i, splitAxis] = splitOffset
+    # f = data['faces'][tri_lower_num == 2]
+    # v = data['vertices'][f[:,:,0] - 1]
+    # mask = v[:, :, splitAxis] > splitOffset
+    # i = np.unique(f[:, :, 0][mask] - 1)
+    # data['vertices'][i, splitAxis] = splitOffset
 
     # choose the side we need
     if (survive == 'left'):  data['faces'] = data['faces'][tri_lower_num >= 2]

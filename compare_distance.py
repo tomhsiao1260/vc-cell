@@ -1,6 +1,7 @@
 import os
 import cv2
 import copy
+import json
 import shutil
 import numpy as np
 from core.utils.loader import parse_obj, save_obj
@@ -39,40 +40,31 @@ def save_n(data, data2, node, depth):
     return d, uv
 
 def save_node(data, data2, node, depth, name, d_list, uv_list):
+
+    def cal(node, mode, name):
+        if (mode == 'left'): name += '0'
+        if (mode == 'right'): name += '1'
+        
+        c_data2 = cut_box(data2, node.boundingData)
+
+        if (depth == 0):
+            c_data = cut_node(data, node)
+            # save_obj(f'{ name }.obj', c_data)
+            # save_obj(f'{ name }_.obj', c_data2)
+            c_d = d_cal(c_data, c_data2)
+            c_uv = c_data['uvs']
+
+            if not np.isinf(np.max(c_d)):
+                d_list.append(c_d)
+                uv_list.append(c_uv)
+        else:
+            save_node(data, c_data2, node, depth, name, d_list, uv_list)
+
     depth -= 1
-
-    leftNode = node.left
-    rightNode = node.right
-
-    leftName = name + '0'
-    rightName = name + '1'
-
-    leftData2 = cut_box(data2, leftNode.boundingData)
-    rightData2 = cut_box(data2, rightNode.boundingData)
-
-    if (depth == 0):
-        left_data = cut_node(data, leftNode)
-        # save_obj(f'{ leftName }.obj', left_data)
-        # save_obj(f'{ leftName }_.obj', leftData2)
-        d_left = d_cal(left_data, leftData2)
-        uv_left = left_data['uvs']
-
-        right_data = cut_node(data, rightNode)
-        # save_obj(f'{ rightName }.obj', right_data)
-        # save_obj(f'{ rightName }_.obj', rightData2)
-        d_right = d_cal(right_data, rightData2)
-        uv_right = right_data['uvs']
-
-        if not np.isinf(np.max(d_left)):
-            d_list.append(d_left)
-            uv_list.append(uv_left)
-
-        if not np.isinf(np.max(d_right)):
-            d_list.append(d_right)
-            uv_list.append(uv_right)
-    else:
-        save_node(data, leftData2, leftNode, depth, leftName, d_list, uv_list)
-        save_node(data, rightData2, rightNode, depth, rightName, d_list, uv_list)
+    if hasattr(node, 'left'):
+        cal(node.left, 'left', name)
+    if hasattr(node, 'right'):
+        cal(node.right, 'right', name)
 
 def d_cal(data_1, data_2):
     point = data_1['vertices']
@@ -110,6 +102,32 @@ def save_layer(data, id):
         save_layer(left, id)
         save_layer(right, id)
 
+def draw(d, uv):
+    d_max = 10
+    # d_max = np.max(d)
+    dotSize = 3
+    d = d / d_max
+
+    # h, w = 500, 500
+    h, w = 1575, 2336
+    # h, w = 15751, 23356
+    image = np.zeros((h, w, 3), dtype=np.uint8)
+
+    for depth, uv in zip(d, uv):
+        u, v = uv
+        u = int(w * u)
+        v = int(h * (1-v))
+
+        value = min(255 * depth, 255)
+        color = (value, value, value)
+        cv2.circle(image, (u, v), dotSize, color, -1)
+
+    cv2.imshow('distance', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    cv2.imwrite('d.png', image)
+
 # id = '20231012184423'
 id = '20231012184424'
 
@@ -123,42 +141,47 @@ id = '20231012184424'
 # data = parse_obj(path)
 # save_layer(data, id)
 
-# w, h = 500, 500
-# image = np.zeros((h, w, 3), dtype=np.uint8)
+# d = []
+# uv = []
 
-image = cv2.imread('d.png')
-h, w = image.shape[:2]
+# for i in range(0, 1000, 100):
+# # for i in range(0, 13300, 100):
+#     print(f'processing {i} ...')
 
-for i in range(0, 2000, 100):
-# for i in range(0, 13300, 100):
-    print(f'processing {i} ...')
+#     name = f'{i}_100.obj'
+#     data_1 = parse_obj(os.path.join('output', '20231012184423', name))
+#     data_2 = parse_obj(os.path.join('output', '20231012184424', name))
 
-    name = f'{i}_100.obj'
-    data_1 = parse_obj(os.path.join('output', '20231012184423', name))
-    data_2 = parse_obj(os.path.join('output', '20231012184424', name))
+#     bvh = MeshBVH(data_1)
+#     data = bvh.data
 
-    bvh = MeshBVH(data_1)
-    data = bvh.data
+#     node = bvh._roots[0]
+#     sub_d, sub_uv = save_n(data, data_2, node, depth=5)
 
-    node = bvh._roots[0]
-    d, uv = save_n(data, data_2, node, depth=5)
-    d_max = np.max(d)
+#     d.append(sub_d)
+#     uv.append(sub_uv)
 
-    for depth, uv in zip(d, uv):
-        u, v = uv
+# d = np.concatenate(d, axis=0)
+# uv = np.concatenate(uv, axis=0)
 
-        u = int(w * u)
-        v = int(h * (1-v))
+# d = np.around(d, decimals=5)
+# d_uv = np.column_stack((d, uv))
 
-        value = 255 * depth / d_max
-        color = (value, value, value)
-        cv2.circle(image, (u, v), 1, color, -1)
+# meta = {}
+# meta['d_uv'] = d_uv.tolist()
 
-cv2.imshow('distance', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# # save main meta.json
+# with open('output/meta.json', "w") as f:
+#     json.dump(meta, f, indent=4)
 
-cv2.imwrite('d.png', image)
+with open('output/meta.json', 'r') as f:
+    data = json.load(f)
+    data = np.array(data['d_uv'])
+
+    d = data[:, 0]
+    uv = data[:, 1:]
+
+    draw(d, uv)
 
 
 
