@@ -83,7 +83,8 @@ class Triangle:
         
         # method 2, in barycentric space
         q = np.cross(nor, p0)
-        d = 1 / np.dot(nor, nor)
+        n = np.dot(nor, nor)
+        d = 1 / (n + 1e-5)
         u = d * np.dot(q, v02)
         v = d * np.dot(q, v10)
         w = 1 - u - v
@@ -94,7 +95,8 @@ class Triangle:
         spaceW = np.logical_and(np.logical_not(np.logical_or(spaceU, spaceV)), w < 0)
 
         # for space u
-        wp = np.minimum(np.maximum(np.dot(p2, v02) / np.dot(v02, v02), 0), 1)
+        n = np.dot(v02, v02)
+        wp = np.minimum(np.maximum(np.dot(p2, v02) / (n + 1e-5), 0), 1)
         up = 0
         vp = 1 - wp
 
@@ -103,7 +105,8 @@ class Triangle:
         w = np.where(spaceU, wp, w)
 
         # for space v
-        up = np.minimum(np.maximum(np.dot(p0, v10) / np.dot(v10, v10), 0), 1)
+        n = np.dot(v10, v10)
+        up = np.minimum(np.maximum(np.dot(p0, v10) / (n + 1e-5), 0), 1)
         vp = 0
         wp = 1 - up
 
@@ -112,7 +115,8 @@ class Triangle:
         w = np.where(spaceV, wp, w)
 
         # for space w
-        vp = np.minimum(np.maximum(np.dot(p1, v21) / np.dot(v21, v21), 0), 1)
+        n = np.dot(v21, v21)
+        vp = np.minimum(np.maximum(np.dot(p1, v21) / (n + 1e-5), 0), 1)
         wp = 0
         up = 1 - vp
 

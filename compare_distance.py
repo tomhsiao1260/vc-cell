@@ -56,16 +56,20 @@ def save_node(data, data2, node, depth, name, d_list, uv_list):
         # save_obj(f'{ leftName }_.obj', leftData2)
         d_left = d_cal(left_data, leftData2)
         uv_left = left_data['uvs']
-        d_list.append(d_left)
-        uv_list.append(uv_left)
 
         right_data = cut_node(data, rightNode)
         # save_obj(f'{ rightName }.obj', right_data)
         # save_obj(f'{ rightName }_.obj', rightData2)
         d_right = d_cal(right_data, rightData2)
         uv_right = right_data['uvs']
-        d_list.append(d_right)
-        uv_list.append(uv_right)
+
+        if not np.isinf(np.max(d_left)):
+            d_list.append(d_left)
+            uv_list.append(uv_left)
+
+        if not np.isinf(np.max(d_right)):
+            d_list.append(d_right)
+            uv_list.append(uv_right)
     else:
         save_node(data, leftData2, leftNode, depth, leftName, d_list, uv_list)
         save_node(data, rightData2, rightNode, depth, rightName, d_list, uv_list)
@@ -103,56 +107,58 @@ def save_layer(data, id):
     else:
         cutZ = int(((layerMin + layerMax) / 2) // 100) * 100
         left, right = cutDivide(data, cutZ)
-        print(layerMin, cutZ, layerMax)
         save_layer(left, id)
         save_layer(right, id)
 
 # id = '20231012184423'
 id = '20231012184424'
 
-path = os.path.join('../full-scrolls/Scroll1.volpkg/paths', '20231012184424', id + '.obj')
+# path = os.path.join('../full-scrolls/Scroll1.volpkg/paths', '20231012184424', id + '.obj')
 
-# clear output folder
-folder = os.path.join('output', id)
-shutil.rmtree(folder, ignore_errors=True)
-if not os.path.exists(folder): os.makedirs(folder)
+# # clear output folder
+# folder = os.path.join('output', id)
+# shutil.rmtree(folder, ignore_errors=True)
+# if not os.path.exists(folder): os.makedirs(folder)
 
-data = parse_obj(path)
-save_layer(data, id)
+# data = parse_obj(path)
+# save_layer(data, id)
 
-# data_1 = parse_obj('cut_1.obj')
-# data_2 = parse_obj('cut_2.obj')
+# w, h = 500, 500
+# image = np.zeros((h, w, 3), dtype=np.uint8)
 
-# bvh = MeshBVH(data_1)
+image = cv2.imread('d.png')
+h, w = image.shape[:2]
 
-# data = bvh.data
-# data2 = data_2
+for i in range(0, 2000, 100):
+# for i in range(0, 13300, 100):
+    print(f'processing {i} ...')
 
-# node = bvh._roots[0]
-# d, uv = save_n(data, data2, node, depth=5)
-# d_max = np.max(d)
+    name = f'{i}_100.obj'
+    data_1 = parse_obj(os.path.join('output', '20231012184423', name))
+    data_2 = parse_obj(os.path.join('output', '20231012184424', name))
 
-# # w, h = 500, 500
-# # image = np.zeros((h, w, 3), dtype=np.uint8)
+    bvh = MeshBVH(data_1)
+    data = bvh.data
 
-# image = cv2.imread('d.png')
-# h, w = image.shape[:2]
+    node = bvh._roots[0]
+    d, uv = save_n(data, data_2, node, depth=5)
+    d_max = np.max(d)
 
-# for depth, uv in zip(d, uv):
-#     u, v = uv
+    for depth, uv in zip(d, uv):
+        u, v = uv
 
-#     u = int(w * u)
-#     v = int(h * (1-v))
+        u = int(w * u)
+        v = int(h * (1-v))
 
-#     value = 255 * depth / d_max
-#     color = (value, value, value)
-#     cv2.circle(image, (u, v), 1, color, -1)
+        value = 255 * depth / d_max
+        color = (value, value, value)
+        cv2.circle(image, (u, v), 1, color, -1)
 
-# cv2.imshow('distance', image)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+cv2.imshow('distance', image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-# cv2.imwrite('d.png', image)
+cv2.imwrite('d.png', image)
 
 
 

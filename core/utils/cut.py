@@ -2,6 +2,8 @@ import copy
 import numpy as np
 
 def re_index(data):
+    if (data['faces'].shape[0] == 0): return
+
     data['faces'] -= 1
     selected_vertices = np.unique(data['faces'][:,:,0])
 
