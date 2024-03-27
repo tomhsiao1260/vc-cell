@@ -82,6 +82,15 @@ def d_cal(data_1, data_2):
         d = np.linalg.norm(point - target, axis=1)
         closestDistance = np.minimum(closestDistance, d)
         closestPoint = np.where((closestDistance == d)[..., np.newaxis], target, closestPoint)
+        closestPointIndex = np.where((closestDistance == d), i, closestPointIndex)
+
+    triNormals = data_2['normals'][data_2['faces'][:,:,0] - 1]
+    nor = triNormals[closestPointIndex][:,0]
+    dir = closestPoint - point
+
+    t = np.sum(nor * dir, axis=1)
+    sign = np.where(t < 0, -1, 1)
+    closestDistance *= sign
 
     return closestDistance
 
@@ -104,7 +113,7 @@ def save_layer(data, id):
 
 def draw(d, uv):
     d_max = 10
-    # d_max = np.max(d)
+    # d_max = np.max(np.abs(d))
     dotSize = 3
     d = d / d_max
 
@@ -118,8 +127,11 @@ def draw(d, uv):
         u = int(w * u)
         v = int(h * (1-v))
 
-        value = min(255 * depth, 255)
-        color = (value, value, value)
+        value = min(255 * abs(depth), 255)
+
+        if depth > 0: color = (0, 0, value)
+        if not depth > 0: color = (0, value, 0)
+        # color = (value, value, value)
         cv2.circle(image, (u, v), dotSize, color, -1)
 
     cv2.imshow('distance', image)
@@ -144,7 +156,7 @@ id = '20231012184424'
 # d = []
 # uv = []
 
-# for i in range(0, 1000, 100):
+# for i in range(0, 2000, 100):
 # # for i in range(0, 13300, 100):
 #     print(f'processing {i} ...')
 
