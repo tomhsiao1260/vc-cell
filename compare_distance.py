@@ -1,8 +1,10 @@
+import os
 import cv2
 import copy
+import shutil
 import numpy as np
 from core.utils.loader import parse_obj, save_obj
-from core.utils.cut import cutLayer, cutBounding, re_index
+from core.utils.cut import cutLayer, cutDivide, cutBounding, re_index
 from core.MeshBVH import MeshBVH
 from core.math.Triangle import Triangle
 
@@ -87,50 +89,70 @@ def d_cal(data_1, data_2):
 
     return closestDistance
 
-path_1 = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184423.obj'
-path_2 = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184424.obj'
+def save_layer(data, id):
+    layerMin = np.min(data['vertices'][:, 2])
+    layerMax = np.max(data['vertices'][:, 2])
 
-# data_1 = parse_obj(path_1)
-# data_2 = parse_obj(path_2)
+    layerMin = int(layerMin // 100) * 100
+    layerMax = int(layerMax // 100) * 100
+    gap = layerMax - layerMin
 
-# cutLayer(data_1, 5000, 5100)
-# cutLayer(data_2, 5000, 5100)
-# save_obj('cut_1.obj', data_1)
-# save_obj('cut_2.obj', data_2)
+    if (gap <= 100):
+        name = os.path.join('output', id, f'{layerMin}_{gap}.obj')
+        save_obj(name, data)
+    else:
+        cutZ = int(((layerMin + layerMax) / 2) // 100) * 100
+        left, right = cutDivide(data, cutZ)
+        print(layerMin, cutZ, layerMax)
+        save_layer(left, id)
+        save_layer(right, id)
 
-data_1 = parse_obj('cut_1.obj')
-data_2 = parse_obj('cut_2.obj')
+# id = '20231012184423'
+id = '20231012184424'
 
-bvh = MeshBVH(data_1)
+path = os.path.join('../full-scrolls/Scroll1.volpkg/paths', '20231012184424', id + '.obj')
 
-data = bvh.data
-data2 = data_2
+# clear output folder
+folder = os.path.join('output', id)
+shutil.rmtree(folder, ignore_errors=True)
+if not os.path.exists(folder): os.makedirs(folder)
 
-node = bvh._roots[0]
-d, uv = save_n(data, data2, node, depth=5)
-d_max = np.max(d)
+data = parse_obj(path)
+save_layer(data, id)
 
-# w, h = 500, 500
-# image = np.zeros((h, w, 3), dtype=np.uint8)
+# data_1 = parse_obj('cut_1.obj')
+# data_2 = parse_obj('cut_2.obj')
 
-image = cv2.imread('d.png')
-h, w = image.shape[:2]
+# bvh = MeshBVH(data_1)
 
-for depth, uv in zip(d, uv):
-    u, v = uv
+# data = bvh.data
+# data2 = data_2
 
-    u = int(w * u)
-    v = int(h * (1-v))
+# node = bvh._roots[0]
+# d, uv = save_n(data, data2, node, depth=5)
+# d_max = np.max(d)
 
-    value = 255 * depth / d_max
-    color = (value, value, value)
-    cv2.circle(image, (u, v), 1, color, -1)
+# # w, h = 500, 500
+# # image = np.zeros((h, w, 3), dtype=np.uint8)
 
-cv2.imshow('distance', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# image = cv2.imread('d.png')
+# h, w = image.shape[:2]
 
-cv2.imwrite('d.png', image)
+# for depth, uv in zip(d, uv):
+#     u, v = uv
+
+#     u = int(w * u)
+#     v = int(h * (1-v))
+
+#     value = 255 * depth / d_max
+#     color = (value, value, value)
+#     cv2.circle(image, (u, v), 1, color, -1)
+
+# cv2.imshow('distance', image)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+# cv2.imwrite('d.png', image)
 
 
 

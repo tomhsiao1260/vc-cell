@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 def re_index(data):
@@ -39,6 +40,14 @@ def cut_obj(data, splitAxis, splitOffset, survive):
     if (survive == 'left'):  data['faces'] = data['faces'][tri_lower_num >= 2]
     if (survive == 'right'): data['faces'] = data['faces'][tri_lower_num < 2]
 
+    # return both
+    if (survive == 'both'):
+        left = copy.deepcopy(data)
+        right = copy.deepcopy(data)
+        left['faces'] = data['faces'][tri_lower_num >= 2]
+        right['faces'] = data['faces'][tri_lower_num < 2]
+        return left, right
+
     return data
 
 # cut a given obj along z-axis
@@ -49,6 +58,14 @@ def cutLayer(data, layerMin, layerMax):
 
     re_index(data)
     return data
+
+# cut a given obj into two along z-axis
+def cutDivide(data, cutZ):
+    left, right = cut_obj(data, splitAxis = 2, splitOffset = cutZ, survive = 'both')
+
+    re_index(left)
+    re_index(right)
+    return left, right 
 
 # cut a given obj via a bounding box
 def cutBounding(data, boxMin, boxMax):
