@@ -3,11 +3,30 @@ import cv2
 import copy
 import json
 import shutil
+import argparse
 import numpy as np
 from core.utils.loader import parse_obj, save_obj
 from core.utils.cut import cutLayer, cutDivide, cutBounding, re_index
 from core.MeshBVH import MeshBVH
 from core.math.Triangle import Triangle
+
+# cut OBJ into multi chunks along z-axis
+def preprocess(data, folderName):
+    layerMin = np.min(data['vertices'][:, 2])
+    layerMax = np.max(data['vertices'][:, 2])
+
+    layerMin = int(layerMin // 100) * 100
+    layerMax = int(layerMax // 100) * 100
+    gap = layerMax - layerMin
+
+    if (gap <= 100):
+        name = os.path.join(folderName, f'z{layerMin}_d{gap}.obj')
+        save_obj(name, data)
+    else:
+        cutZ = int(((layerMin + layerMax) / 2) // 100) * 100
+        left, right = cutDivide(data, cutZ)
+        preprocess(left, folderName)
+        preprocess(right, folderName)
 
 def cut_node(data, node):
     offset = node._offset
@@ -94,23 +113,6 @@ def d_cal(data_1, data_2):
 
     return closestDistance
 
-def save_layer(data, id):
-    layerMin = np.min(data['vertices'][:, 2])
-    layerMax = np.max(data['vertices'][:, 2])
-
-    layerMin = int(layerMin // 100) * 100
-    layerMax = int(layerMax // 100) * 100
-    gap = layerMax - layerMin
-
-    if (gap <= 100):
-        name = os.path.join('output', id, f'{layerMin}_{gap}.obj')
-        save_obj(name, data)
-    else:
-        cutZ = int(((layerMin + layerMax) / 2) // 100) * 100
-        left, right = cutDivide(data, cutZ)
-        save_layer(left, id)
-        save_layer(right, id)
-
 def draw(d, uv):
     d_max = 10
     # d_max = np.max(np.abs(d))
@@ -140,18 +142,24 @@ def draw(d, uv):
 
     cv2.imwrite('d.png', image)
 
-# id = '20231012184423'
-id = '20231012184424'
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Segmentation inspection / evaluation')
+    parser.add_argument('--mode', type=str, help='preprocess or inspection')
+    parser.add_argument('--name', type=str, help='output folder name')
+    parser.add_argument('--path', type=str, help='segment OBJ path')
+    args = parser.parse_args()
 
-# path = os.path.join('../full-scrolls/Scroll1.volpkg/paths', '20231012184424', id + '.obj')
+    # cut the segment
+    if (args.mode == 'preprocess'):
+        folderName = os.path.join('output', args.name)
+        shutil.rmtree(folderName, ignore_errors=True)
+        os.makedirs(folderName)
+        
+        data = parse_obj(args.path)
+        preprocess(data, folderName)
 
-# # clear output folder
-# folder = os.path.join('output', id)
-# shutil.rmtree(folder, ignore_errors=True)
-# if not os.path.exists(folder): os.makedirs(folder)
-
-# data = parse_obj(path)
-# save_layer(data, id)
+# path = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184424.obj'
+# path = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184423.obj'
 
 # d = []
 # uv = []
@@ -186,14 +194,14 @@ id = '20231012184424'
 # with open('output/meta.json', "w") as f:
 #     json.dump(meta, f, indent=4)
 
-with open('output/meta.json', 'r') as f:
-    data = json.load(f)
-    data = np.array(data['d_uv'])
+# with open('output/meta.json', 'r') as f:
+#     data = json.load(f)
+#     data = np.array(data['d_uv'])
 
-    d = data[:, 0]
-    uv = data[:, 1:]
+#     d = data[:, 0]
+#     uv = data[:, 1:]
 
-    draw(d, uv)
+#     draw(d, uv)
 
 
 

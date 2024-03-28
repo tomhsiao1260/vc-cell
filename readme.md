@@ -117,6 +117,19 @@ npm run dev
 
 cheer 🌱
 
+## Segmentation inspection / evaluation
+
+Visually compare two flattened meshes of the same region: using a color map, for each pixel, plot the distance from segmentation(s) A to the nearest point in segmentation(s) B.
+
+Take segment `20231012184424` as an example of A and `20231012184423` as B. To generate a map related to A to see how much difference there is from B, we need to cut them into multiple chunks in advance. It will generate a folder in `output` folder with the corresponding segment chunks (~2min).
+
+```bash
+# cut A along z-axis
+python inspect_segment.py --mode preprocess --name 4424 --path 20231012184424.obj
+# cut B along z-axis
+python inspect_segment.py --mode preprocess --name 4423 --path 20231012184423.obj
+```
+
 ## Notes
 
 It is also recommended to adjust the browser to a smaller border size for a smoother experience. Full screen may be a bit laggy. In addition, please don't hesitate to message me on Discord or here if you have any difficulty or questions when using it.
