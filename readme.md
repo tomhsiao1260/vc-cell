@@ -130,6 +130,18 @@ python inspect_segment.py --mode preprocess --name 4424 --path 20231012184424.ob
 python inspect_segment.py --mode preprocess --name 4423 --path 20231012184423.obj
 ```
 
+Now, we can calculate the nearest distance between segments A, B. It will generate a `.npy` file which stores all the resulting data.
+
+```bash
+python inspect_segment.py --mode inspect --A 4424 --B 4423 --o output/inspect.npy
+```
+
+Let's visualize the result.
+
+```bash
+python inspect_segment.py --mode plot --w 2336 --h 1575 --i output/inspect.npy
+```
+
 ## Notes
 
 It is also recommended to adjust the browser to a smaller border size for a smoother experience. Full screen may be a bit laggy. In addition, please don't hesitate to message me on Discord or here if you have any difficulty or questions when using it.

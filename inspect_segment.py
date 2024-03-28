@@ -1,7 +1,6 @@
 import os
 import cv2
 import copy
-import json
 import shutil
 import argparse
 import numpy as np
@@ -144,9 +143,15 @@ def draw(d, uv):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Segmentation inspection / evaluation')
-    parser.add_argument('--mode', type=str, help='preprocess or inspection')
-    parser.add_argument('--name', type=str, help='output folder name')
-    parser.add_argument('--path', type=str, help='segment OBJ path')
+    parser.add_argument('--mode', type=str, help='preprocess, inspect, plot')
+    parser.add_argument('--name', type=str, help='output folder name', default='')
+    parser.add_argument('--path', type=str, help='segment OBJ path', default='')
+    parser.add_argument('--A', type=str, help='segment A folder name', default='')
+    parser.add_argument('--B', type=str, help='segment B folder name', default='')
+    parser.add_argument('--i', type=str, help='input path', default='')
+    parser.add_argument('--o', type=str, help='output path', default='')
+    parser.add_argument('--w', type=str, help='image width', default='')
+    parser.add_argument('--h', type=str, help='image height', default='')
     args = parser.parse_args()
 
     # cut the segment
@@ -158,50 +163,48 @@ if __name__ == "__main__":
         data = parse_obj(args.path)
         preprocess(data, folderName)
 
+    # inspect
+    if (args.mode == 'inspect'):
+        dList = []
+        uvList = []
+
+        # for i in range(0, 2000, 100):
+        for i in range(0, 13300, 100):
+            print(f'processing {i} ...')
+
+            name = f'z{i}_d100.obj'
+            data_A = parse_obj(os.path.join('output', args.A, name))
+            data_B = parse_obj(os.path.join('output', args.B, name))
+
+            bvh = MeshBVH(data_A)
+            data = bvh.data
+
+            node = bvh._roots[0]
+            sub_d, sub_uv = save_n(data, data_B, node, depth=5)
+
+            dList.append(sub_d)
+            uvList.append(sub_uv)
+
+        d = np.concatenate(dList, axis=0)
+        uv = np.concatenate(uvList, axis=0)
+
+        d = np.around(d, decimals=5)
+        d_uv = np.column_stack((d, uv))
+
+        np.save(args.o, d_uv)
+
+    # inspect
+    if (args.mode == 'plot'):
+        d_uv = np.load(args.i)
+
+        d = d_uv[:, 0]
+        uv = d_uv[:, 1:]
+
+        draw(d, uv)
+
 # path = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184424.obj'
 # path = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184423.obj'
 
-# d = []
-# uv = []
-
-# for i in range(0, 2000, 100):
-# # for i in range(0, 13300, 100):
-#     print(f'processing {i} ...')
-
-#     name = f'{i}_100.obj'
-#     data_1 = parse_obj(os.path.join('output', '20231012184423', name))
-#     data_2 = parse_obj(os.path.join('output', '20231012184424', name))
-
-#     bvh = MeshBVH(data_1)
-#     data = bvh.data
-
-#     node = bvh._roots[0]
-#     sub_d, sub_uv = save_n(data, data_2, node, depth=5)
-
-#     d.append(sub_d)
-#     uv.append(sub_uv)
-
-# d = np.concatenate(d, axis=0)
-# uv = np.concatenate(uv, axis=0)
-
-# d = np.around(d, decimals=5)
-# d_uv = np.column_stack((d, uv))
-
-# meta = {}
-# meta['d_uv'] = d_uv.tolist()
-
-# # save main meta.json
-# with open('output/meta.json', "w") as f:
-#     json.dump(meta, f, indent=4)
-
-# with open('output/meta.json', 'r') as f:
-#     data = json.load(f)
-#     data = np.array(data['d_uv'])
-
-#     d = data[:, 0]
-#     uv = data[:, 1:]
-
-#     draw(d, uv)
 
 
 

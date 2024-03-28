@@ -4,6 +4,7 @@
 *.mtl
 *.tif
 *.nrrd
+*.npy
 
 env/
 model/
