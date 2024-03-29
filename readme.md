@@ -31,7 +31,9 @@ label_path = '20230702185753_inklabels.png'
 
 ## Select a location
 
+<p align="center">
 <img width="226" alt="label" src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/c1c4fec9-0189-4ca5-9622-170a8533d1f1">
+</p>
 
 Let's say you have a labeled image of a segment, but some local areas have some interesting behaviors that make you want to take a closer look. Take the spot above in segment `20230702185753` as an example, the uv coordinate of that spot is around `(0.521, 0.492)` (lower left and upper right corner are (0, 0) and (1, 1) respectively).
 
@@ -121,6 +123,10 @@ cheer 🌱
 
 Visually compare two flattened meshes of the same region: using a color map, for each pixel, plot the distance from segmentation(s) A to the nearest point in segmentation(s) B.
 
+<p align="center">
+<img width="500" alt="d" src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/7f6899c9-cb03-4d5b-a8f0-f1f5632ab105">
+</p>
+
 Take segment `20231012184424` as an example of A and `20231012184423` as B. To generate a map related to A to see how much difference there is from B, we need to cut them into multiple chunks in advance. It will generate a folder in `output` folder with the corresponding segment chunks (~2min).
 
 ```bash
@@ -130,16 +136,25 @@ python inspect_segment.py --mode preprocess --name 4424 --path 20231012184424.ob
 python inspect_segment.py --mode preprocess --name 4423 --path 20231012184423.obj
 ```
 
-Now, we can calculate the nearest distance between segments A, B. It will generate a `.npy` file which stores all the resulting data.
+Now, we can calculate the nearest distance between segments A, B. It will generate a `.npz` file which stores all the related info (~8min).
 
 ```bash
-python inspect_segment.py --mode inspect --A 4424 --B 4423 --o output/inspect.npy
+python inspect_segment.py --mode inspect --A 4424 --B 4423 --o output/inspect.npz
 ```
 
-Let's visualize the result.
+`inspect.npz` stores the nearest distance `d` and its corresponding uv coordinate `uv` for each vertices in segment A. Note that `d` can be a negative value, which means the point in segment A is below the surface of B (compared to surface normal of B), vice versa.
+
+```python
+data = np.load('output/inspect.npz')
+
+d = data['d']
+uv = data['uv']
+```
+
+There are many ways to visualize the `.npz` data. It's up to you. Here's a simple plot function as a demo.
 
 ```bash
-python inspect_segment.py --mode plot --w 2336 --h 1575 --i output/inspect.npy
+python inspect_segment.py --mode plot --w 2336 --h 1575 --i output/inspect.npz --o output/inspect.png
 ```
 
 ## Notes

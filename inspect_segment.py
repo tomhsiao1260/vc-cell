@@ -1,13 +1,16 @@
 import os
+import re
 import cv2
 import copy
+import glob
 import shutil
 import argparse
 import numpy as np
-from core.utils.loader import parse_obj, save_obj
-from core.utils.cut import cutLayer, cutDivide, cutBounding, re_index
+
 from core.MeshBVH import MeshBVH
 from core.math.Triangle import Triangle
+from core.utils.loader import parse_obj, save_obj
+from core.utils.cut import cutDivide, cutBounding, re_index
 
 # cut OBJ into multi chunks along z-axis
 def preprocess(data, folderName):
@@ -23,7 +26,7 @@ def preprocess(data, folderName):
         save_obj(name, data)
     else:
         cutZ = int(((layerMin + layerMax) / 2) // 100) * 100
-        left, right = cutDivide(data, cutZ)
+        left, right = cutDivide(data, cutZ, align = False)
         preprocess(left, folderName)
         preprocess(right, folderName)
 
@@ -42,7 +45,7 @@ def cut_box(data, boundingData):
     boxMax = boundingData[3:]
 
     data_copy = copy.deepcopy(data)
-    cutBounding(data_copy, boxMin, boxMax)
+    cutBounding(data_copy, boxMin, boxMax, align = False)
 
     return data_copy
 
@@ -84,15 +87,18 @@ def save_node(data, data2, node, depth, name, d_list, uv_list):
     if hasattr(node, 'right'):
         cal(node.right, 'right', name)
 
-def d_cal(data_1, data_2):
-    point = data_1['vertices']
-
+# nearest triangle distance calculation
+def d_cal(data_A, data_B):
+    point = data_A['vertices']
     n, _ = point.shape  
+
     closestPoint = np.full((n, 3), 0)
     closestPointIndex = np.full((n), 0)
     closestDistance = np.full((n), float('inf'))
 
-    triVertices = data_2['vertices'][data_2['faces'][:,:,0] - 1]
+    if (data_B['faces'].shape[0] == 0): return closestDistance
+
+    triVertices = data_B['vertices'][data_B['faces'][:,:,0] - 1]
     tri = Triangle(triVertices)
 
     for i in range(triVertices.shape[0]):
@@ -102,44 +108,41 @@ def d_cal(data_1, data_2):
         closestPoint = np.where((closestDistance == d)[..., np.newaxis], target, closestPoint)
         closestPointIndex = np.where((closestDistance == d), i, closestPointIndex)
 
-    triNormals = data_2['normals'][data_2['faces'][:,:,0] - 1]
+    # sign: above or below the surface (1 or -1)
+    triNormals = data_B['normals'][data_B['faces'][:,:,0] - 1]
     nor = triNormals[closestPointIndex][:,0]
-    dir = closestPoint - point
-
+    dir = point - closestPoint
     t = np.sum(nor * dir, axis=1)
     sign = np.where(t < 0, -1, 1)
     closestDistance *= sign
 
     return closestDistance
 
-def draw(d, uv):
-    d_max = 10
+def plot(d, uv, w, h, filename):
     # d_max = np.max(np.abs(d))
+    d_max = 10
     dotSize = 3
     d = d / d_max
 
-    # h, w = 500, 500
-    h, w = 1575, 2336
-    # h, w = 15751, 23356
     image = np.zeros((h, w, 3), dtype=np.uint8)
 
-    for depth, uv in zip(d, uv):
+    for d, uv in zip(d, uv):
         u, v = uv
         u = int(w * u)
         v = int(h * (1-v))
 
-        value = min(255 * abs(depth), 255)
+        value = min(255 * abs(d), 255)
 
-        if depth > 0: color = (0, 0, value)
-        if not depth > 0: color = (0, value, 0)
-        # color = (value, value, value)
+        # if d > 0: color = (0, value, 0)
+        # if not d > 0: color = (0, 0, value)
+        color = (value, value, value)
         cv2.circle(image, (u, v), dotSize, color, -1)
 
     cv2.imshow('distance', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    cv2.imwrite('d.png', image)
+    cv2.imwrite(filename, image)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Segmentation inspection / evaluation')
@@ -150,8 +153,8 @@ if __name__ == "__main__":
     parser.add_argument('--B', type=str, help='segment B folder name', default='')
     parser.add_argument('--i', type=str, help='input path', default='')
     parser.add_argument('--o', type=str, help='output path', default='')
-    parser.add_argument('--w', type=str, help='image width', default='')
-    parser.add_argument('--h', type=str, help='image height', default='')
+    parser.add_argument('--w', type=int, help='image width', default=0)
+    parser.add_argument('--h', type=int, help='image height', default=0)
     args = parser.parse_args()
 
     # cut the segment
@@ -168,13 +171,26 @@ if __name__ == "__main__":
         dList = []
         uvList = []
 
-        # for i in range(0, 2000, 100):
-        for i in range(0, 13300, 100):
-            print(f'processing {i} ...')
+        def sort_by_layer(filename):
+            match = re.search(r'z(\d+)_d', filename)
+            layer = int(match.group(1))
+            return layer
 
-            name = f'z{i}_d100.obj'
-            data_A = parse_obj(os.path.join('output', args.A, name))
-            data_B = parse_obj(os.path.join('output', args.B, name))
+        files = glob.glob(os.path.join('output', args.A, '*.obj'))
+        sorted_filenames = sorted(files, key=sort_by_layer)
+        # sorted_filenames = sorted_filenames[:3]
+
+        for path in sorted_filenames:
+            name = os.path.basename(path)
+
+            path_A = os.path.join('output', args.A, name)
+            path_B = os.path.join('output', args.B, name)
+
+            if not os.path.exists(path_A) or not os.path.exists(path_B): continue
+            print(f'processing { name }')
+
+            data_A = parse_obj(path_A)
+            data_B = parse_obj(path_B)
 
             bvh = MeshBVH(data_A)
             data = bvh.data
@@ -187,23 +203,18 @@ if __name__ == "__main__":
 
         d = np.concatenate(dList, axis=0)
         uv = np.concatenate(uvList, axis=0)
-
         d = np.around(d, decimals=5)
-        d_uv = np.column_stack((d, uv))
 
-        np.save(args.o, d_uv)
+        np.savez(args.o, d=d, uv=uv)
 
     # inspect
     if (args.mode == 'plot'):
-        d_uv = np.load(args.i)
+        data = np.load(args.i)
 
-        d = d_uv[:, 0]
-        uv = d_uv[:, 1:]
+        d = data['d']
+        uv = data['uv']
 
-        draw(d, uv)
-
-# path = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184424.obj'
-# path = '../full-scrolls/Scroll1.volpkg/paths/20231012184424/20231012184423.obj'
+        plot(d, uv, args.w, args.h, args.o)
 
 
 
