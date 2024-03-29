@@ -133,9 +133,9 @@ def plot(d, uv, w, h, filename):
 
         value = min(255 * abs(d), 255)
 
-        # if d > 0: color = (0, value, 0)
-        # if not d > 0: color = (0, 0, value)
-        color = (value, value, value)
+        if d > 0: color = (0, value, 0)
+        if not d > 0: color = (0, 0, value)
+        # color = (value, value, value)
         cv2.circle(image, (u, v), dotSize, color, -1)
 
     cv2.imshow('distance', image)

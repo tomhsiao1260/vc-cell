@@ -123,10 +123,6 @@ cheer 🌱
 
 Visually compare two flattened meshes of the same region: using a color map, for each pixel, plot the distance from segmentation(s) A to the nearest point in segmentation(s) B.
 
-<p align="center">
-<img width="500" alt="d" src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/7f6899c9-cb03-4d5b-a8f0-f1f5632ab105">
-</p>
-
 Take segment `20231012184424` as an example of A and `20231012184423` as B. To generate a map related to A to see how much difference there is from B, we need to cut them into multiple chunks in advance. It will generate a folder in `output` folder with the corresponding segment chunks (~2min).
 
 ```bash
@@ -156,6 +152,10 @@ There are many ways to visualize the `.npz` data. It's up to you. Here's a simpl
 ```bash
 python inspect_segment.py --mode plot --w 2336 --h 1575 --i output/inspect.npz --o output/inspect.png
 ```
+
+<p align="center">
+<img width="500" alt="d" src="https://github.com/tomhsiao1260/vc-cell/assets/31985811/7f6899c9-cb03-4d5b-a8f0-f1f5632ab105">
+</p>
 
 ## Notes
 
