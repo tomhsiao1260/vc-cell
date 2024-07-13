@@ -45,19 +45,17 @@ def getLabel(data, pStack, iStack, path):
 
     return labelStack
 
-# python get_sdf.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
+# python get_sdf.py --i output/segment.obj --min 4148 3198 6574 --size 256 256 256
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description='Generate SDF & Inklabels via boudning box')
     parser.add_argument('--i', type=str, help='OBJ input path')
-    parser.add_argument('--center', nargs=3, type=float, metavar=('X', 'Y', 'Z'), help='bounding box center (x, y, z)')
+    parser.add_argument('--min', nargs=3, type=int, metavar=('X', 'Y', 'Z'), help='bounding box minimum (x, y, z)')
     parser.add_argument('--size', nargs=3, type=int, metavar=('X', 'Y', 'Z'), help='bounding box size (w, h, d)')
     args = parser.parse_args()
 
-    center = np.array(args.center)
     boxSize = np.array(args.size)
-    boxMin = center - boxSize / 2
-    boxMax = center + boxSize / 2
+    boxMin = np.array(args.min)
+    boxMax = boxMin + boxSize
 
     # extract sdf
     data = parse_obj(args.i)

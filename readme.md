@@ -53,17 +53,20 @@ Volume Center (x, y, z):
 4276.67 3326.57 6702.28
 
 Volume Size (w, h, d):
-150 100 120
+256 256 256
+
+Volume Minimum (x, y, z):
+4148 3198 6574
 ```
 
-This means we need to download `cell_yxz_007_009_014.tif` and put it into the corresponding `grid_folder`. And the remaining info is the center and size ​​of a volume bounding box formed around this uv coordinate. The center is the position of that uv coordinate in 3D space.
+This means we need to download `cell_yxz_007_009_014.tif` and put it into the corresponding `grid_folder`. And the remaining info is the center and size of a volume bounding box formed around this uv coordinate. The center is the position of that uv coordinate in 3D space.
 
 ## Get the volume
 
 Now we can extract a small volume from `grid_folder` via previous bounding box info.
 
 ```bash
-python get_volume.py --center 4276.67 3326.57 6702.28 --size 150 100 120
+python get_volume.py --min 4148 3198 6574 --size 256 256 256
 ```
 
 A `volume.tif` and a `volume.nrrd` will be generated in `output` folder. These two files are the same data in the same area. The tif version is for you to view or process further. The nrrd version is for rendering in browser later.
@@ -73,7 +76,7 @@ A `volume.tif` and a `volume.nrrd` will be generated in `output` folder. These t
 Let's extract the corresponding segment obj data within this bounding box.
 
 ```bash
-python cut_obj.py --o output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
+python cut_obj.py --o output/segment.obj --min 4148 3198 6574 --size 256 256 256
 ```
 
 It will generate a cropped OBJ file in output folder called `segment.obj` which only preserves the data within that bounding box.
@@ -83,7 +86,7 @@ It will generate a cropped OBJ file in output folder called `segment.obj` which 
 With the info above, in that region, we can generate inklabels in 3D space. But before that, we need to calculate the distance field. This command will generate a `sdf.tif` and `label.tif` with its corresponding `.nrrd` files.
 
 ```bash
-python get_sdf.py --i output/segment.obj --center 4276.67 3326.57 6702.28 --size 150 100 120
+python get_sdf.py --i output/segment.obj --min 4148 3198 6574 --size 256 256 256
 ```
 
 `sdf.png` store the distance field info inside that bounding box. Each pixel store a normalized distance value between that point and `segment.obj`.
